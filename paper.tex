@@ -1,0 +1,397 @@
+\documentclass[a4paper,UKenglish,cleveref, autoref, thm-restate]{lipics-v2021}
+\hideLIPIcs
+
+\bibliographystyle{plainurl}
+\title{The Choose-Your-Own-Adventure Calculus} % (Pearl)
+
+\author{Tomas Petricek}{Charles University, Prague, Czechia}{tomas@tomasp.net}{0000-0002-7242-2208}{}
+\author{Jan Liam Verter}{Charles University, Prague, Czechia}{todo@todo}{}{}
+\author{Mikoláš Fromm}{Charles University, Prague, Czechia}{todo@todo}{}{}
+\ccsdesc[500]{Software and its engineering~General programming languages}
+\keywords{Interactive programming systems, Type providers, Proof assistants}
+\nolinenumbers
+
+
+% \funding{funding}
+% \acknowledgements{I want to thank \dots}
+\authorrunning{Authors}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+Some of the most remarkable results in mathematics reveal surprising connections between different
+branches of the discipline. The aim of this paper is to point out a modest, but still
+remarkable, similarity between a range of different interactive programming systems.
+
+~
+
+use a simple formal mathematical model
+that we call \emph{the choose-your-own-adventure calculus} to
+
+
+todo
+
+% and enable a transfer of ideas between them
+
+\end{abstract}
+
+\newpage
+
+\section{Introduction}
+
+Multiple interactive programming systems, ranging from code editors for object-oriented programming
+languages to data exploration systems and interactive proof assistants, exhibit a remarkably
+similar pattern of interaction. They offer the user, who can be a programmer, a data scientist
+or a proof writer, a range of choices that the user can select from in order to complete their
+program, script or proof. The user can initiate the interaction iteratively, using it to
+create and refine a larger part of their program.
+
+There are subtle differences between different implementations of the general pattern. In some
+systems, the resulting source code will contain a trace of the choices made by the user.
+For example, when choosing an item from a list of class members, the code will contain the member
+name. In some systems, the interaction results in a block of code that can be included in the
+source file, but does not include a trace of the interaction. For example, invoking a proof search
+or case split in Idris \cite{brady-2015-idris} constructs a well-typed program, but leaves no trace
+of the command used to construct it.
+%
+The nature of the generated options also varies. The list of choices may include all possible
+options that are valid at a given location, or it may list only a subset of the valid options.
+In some cases, it may also include incorrect options as, for example, in auto-completion
+for dynamic languages \cite{frolich-2024-autocomplete}.
+
+The aim of this paper is paper is to formally capture the recurring interaction pattern:
+
+\begin{enumerate}
+\setlength{\itemsep}{5pt}
+\item We motivate the formalism by reviewing four different systems that implement a variation on the
+interaction pattern. These include type providers for data access in F\# \cite{syme-2013-inforich},
+type providers for data exploration in The Gamma \cite{petricek-2022-thegamma,petricek-2017-dotdriven},
+AI assistants for semi-automated data wrangling \cite{petricek-2023-aias} and tooling for
+interactive proof assistants \cite{altenkirch-1994-alf,brady-2015-idris,verter-2024-mixed} (Section~\ref{sec:motivation}).
+
+\item We introduce the \emph{choose-your-own-adventure calculus}, which is a small formal structure
+that models an interactive system where a user constructs a program by repeatedly choosing from a list
+of options offered by the system (Section~\ref{sec:calculus}).
+
+\item The calculus allows us to make the aforementioned subtle differences precise. We define the
+notions of \emph{correctness} and \emph{completeness} for the choose-your-own-adventure calculus.
+To distinguish the different ways of embedding the interactions in the edited programs, we
+also formally define \emph{base-level} and \emph{meta-level} integration of the system.
+
+\item We show that various programmer assistance tools, such as search and AI-based recommendations
+can be built on top of the primitives offered by the calculus, showing how the
+choose-your-own-adventure calculus supports of transfer of ideas across different kinds of
+interactive programming systems.
+\end{enumerate}
+
+The main contribution of this paper is conceptual rather than technical. Programming language
+researchers have long focused on \emph{programming languages} rather than on a more general notion
+of interactive \emph{programming systems} \cite{rpg-2012-revolution,jakubovic-2023-techdims}.
+However, programming language theory methods can be equally useful for studying interactive
+systems~\cite{adams-2025-grove}. The choose-your-own-adventure-calculus is another step in this
+direction. It brings to light a pattern that is perhaps not surprising, but is very easy to
+overlook until it is given a name.
+
+\newpage
+
+\section{Motivation}
+\label{sec:motivation}
+
+~
+
+\section{Formal model}
+\label{sec:calculus}
+
+~
+
+\section{Examples}
+\label{sec:examples}
+
+~
+
+\section{Properties}
+\label{sec:properties}
+
+~
+
+\section{Applications}
+\label{sec:applications}
+
+
+\cite{jakubovic-2023-techdims}
+\cite{petricek-2020-live}
+
+
+\newpage
+
+\bibliography{paper}
+
+\newpage
+
+\section{Typesetting instructions -- Summary}
+\label{sec:typesetting-summary}
+
+LIPIcs is a series of open access high-quality conference proceedings across all fields in informatics established in cooperation with Schloss Dagstuhl.
+In order to do justice to the high scientific quality of the conferences that publish their proceedings in the LIPIcs series, which is ensured by the thorough review process of the respective events, we believe that LIPIcs proceedings must have an attractive and consistent layout matching the standard of the series.
+Moreover, the quality of the metadata, the typesetting and the layout must also meet the requirements of other external parties such as indexing service, DOI registry, funding agencies, among others. The guidelines contained in this document serve as the baseline for the authors, editors, and the publisher to create documents that meet as many different requirements as possible.
+
+Please comply with the following instructions when preparing your article for a LIPIcs proceedings volume.
+\paragraph*{Minimum requirements}
+
+\begin{itemize}
+\item Use pdflatex and an up-to-date \LaTeX{} system.
+\item Use further \LaTeX{} packages and custom made macros carefully and only if required.
+\item Use the provided sectioning macros: \verb+\section+, \verb+\subsection+, \verb+\subsubsection+, \linebreak \verb+\paragraph+, \verb+\paragraph*+, and \verb+\subparagraph*+.
+\item Provide suitable graphics of at least 300dpi (preferably in PDF format).
+\item Use BibTeX and keep the standard style (\verb+plainurl+) for the bibliography.
+\item Please try to keep the warnings log as small as possible. Avoid overfull \verb+\hboxes+ and any kind of warnings/errors with the referenced BibTeX entries.
+\item Use a spellchecker to correct typos.
+\end{itemize}
+
+\paragraph*{Mandatory metadata macros}
+Please set the values of the metadata macros carefully since the information parsed from these macros will be passed to publication servers, catalogues and search engines.
+Avoid placing macros inside the metadata macros. The following metadata macros/environments are mandatory:
+\begin{itemize}
+\item \verb+\title+ and, in case of long titles, \verb+\titlerunning+.
+\item \verb+\author+, one for each author, even if two or more authors have the same affiliation.
+\item \verb+\authorrunning+ and \verb+\Copyright+ (concatenated author names)\\
+The \verb+\author+ macros and the \verb+\Copyright+ macro should contain full author names (especially with regard to the first name), while \verb+\authorrunning+ should contain abbreviated first names.
+\item \verb+\ccsdesc+ (ACM classification, see \url{https://www.acm.org/publications/class-2012}).
+\item \verb+\keywords+ (a comma-separated list of keywords).
+\item \verb+\relatedversion+ (if there is a related version, typically the ``full version''); please make sure to provide a persistent URL, e.\,g., at arXiv.
+\item \verb+\begin{abstract}...\end{abstract}+ .
+\end{itemize}
+
+\paragraph*{Please do not \ldots} %Do not override the \texttt{\seriesstyle}-defaults}
+Generally speaking, please do not override the \texttt{lipics-v2021}-style defaults. To be more specific, a short checklist also used by Dagstuhl Publishing during the final typesetting is given below.
+In case of \textbf{non-compliance} with these rules Dagstuhl Publishing will remove the corresponding parts of \LaTeX{} code and \textbf{replace it with the \texttt{lipics-v2021} defaults}. In serious cases, we may reject the LaTeX-source and expect the corresponding author to revise the relevant parts.
+\begin{itemize}
+\item Do not use a different main font. (For example, the \texttt{times} package is forbidden.)
+\item Do not alter the spacing of the \texttt{lipics-v2021.cls} style file.
+\item Do not use \verb+enumitem+ and \verb+paralist+. (The \texttt{enumerate} package is preloaded, so you can use
+ \verb+\begin{enumerate}[(a)]+ or the like.)
+\item Do not use ``self-made'' sectioning commands (e.\,g., \verb+\noindent{\bf My+ \verb+Paragraph}+).
+\item Do not hide large text blocks using comments or \verb+\iffalse+ $\ldots$ \verb+\fi+ constructions.
+\item Do not use conditional structures to include/exclude content. Instead, please provide only the content that should be published -- in one file -- and nothing else.
+\item Do not wrap figures and tables with text. In particular, the package \texttt{wrapfig} is not supported.
+\item Do not change the bibliography style. In particular, do not use author-year citations. (The
+\texttt{natbib} package is not supported.)
+\end{itemize}
+
+\enlargethispage{\baselineskip}
+
+This is only a summary containing the most relevant details. Please read the complete document ``LIPIcs: Instructions for Authors and the \texttt{lipics-v2021} Class'' for all details and don't hesitate to contact Dagstuhl Publishing (\url{mailto:publishing@dagstuhl.de}) in case of questions or comments:
+\href{http://drops.dagstuhl.de/styles/lipics-v2021/lipics-v2021-authors/lipics-v2021-authors-guidelines.pdf}{\texttt{http://drops.dagstuhl.de/styles/lipics-v2021/\newline lipics-v2021-authors/lipics-v2021-authors-guidelines.pdf}}
+
+\section{Lorem ipsum dolor sit amet}
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit \cite{DBLP:journals/cacm/Knuth74}. Praesent convallis orci arcu, eu mollis dolor. Aliquam eleifend suscipit lacinia. Maecenas quam mi, porta ut lacinia sed, convallis ac dui. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse potenti. Donec eget odio et magna ullamcorper vehicula ut vitae libero. Maecenas lectus nulla, auctor nec varius ac, ultricies et turpis. Pellentesque id ante erat. In hac habitasse platea dictumst. Curabitur a scelerisque odio. Pellentesque elit risus, posuere quis elementum at, pellentesque ut diam. Quisque aliquam libero id mi imperdiet quis convallis turpis eleifend.
+
+\begin{lemma}[Lorem ipsum]
+\label{lemma:lorem}
+Vestibulum sodales dolor et dui cursus iaculis. Nullam ullamcorper purus vel turpis lobortis eu tempus lorem semper. Proin facilisis gravida rutrum. Etiam sed sollicitudin lorem. Proin pellentesque risus at elit hendrerit pharetra. Integer at turpis varius libero rhoncus fermentum vitae vitae metus.
+\end{lemma}
+
+\begin{proof}
+Cras purus lorem, pulvinar et fermentum sagittis, suscipit quis magna.
+
+
+\proofsubparagraph*{Just some paragraph within the proof.}
+Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+\begin{claim}
+content...
+\end{claim}
+\begin{claimproof}
+content...
+    \begin{enumerate}
+        \item abc abc abc \claimqedhere{}
+    \end{enumerate}
+\end{claimproof}
+
+\end{proof}
+
+\begin{corollary}[Curabitur pulvinar, \cite{DBLP:books/mk/GrayR93}]
+\label{lemma:curabitur}
+Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+\end{corollary}
+
+\begin{proposition}\label{prop1}
+This is a proposition
+\end{proposition}
+
+\autoref{prop1} and \cref{prop1} \ldots
+
+\subsection{Curabitur dictum felis id sapien}
+
+Curabitur dictum \cref{lemma:curabitur} felis id sapien \autoref{lemma:curabitur} mollis ut venenatis tortor feugiat. Curabitur sed velit diam. Integer aliquam, nunc ac egestas lacinia, nibh est vehicula nibh, ac auctor velit tellus non arcu. Vestibulum lacinia ipsum vitae nisi ultrices eget gravida turpis laoreet. Duis rutrum dapibus ornare. Nulla vehicula vulputate iaculis. Proin a consequat neque. Donec ut rutrum urna. Morbi scelerisque turpis sed elit sagittis eu scelerisque quam condimentum. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Aenean nec faucibus leo. Cras ut nisl odio, non tincidunt lorem. Integer purus ligula, venenatis et convallis lacinia, scelerisque at erat. Fusce risus libero, convallis at fermentum in, dignissim sed sem. Ut dapibus orci vitae nisl viverra nec adipiscing tortor condimentum \cite{DBLP:journals/cacm/Dijkstra68a}. Donec non suscipit lorem. Nam sit amet enim vitae nisl accumsan pretium.
+
+\begin{lstlisting}[caption={Useless code.},label=list:8-6,captionpos=t,float,abovecaptionskip=-\medskipamount]
+for i:=maxint to 0 do
+begin
+    j:=square(root(i));
+end;
+\end{lstlisting}
+
+\subsection{Proin ac fermentum augue}
+
+Proin ac fermentum augue. Nullam bibendum enim sollicitudin tellus egestas lacinia euismod orci mollis. Nulla facilisi. Vivamus volutpat venenatis sapien, vitae feugiat arcu fringilla ac. Mauris sapien tortor, sagittis eget auctor at, vulputate pharetra magna. Sed congue, dui nec vulputate convallis, sem nunc adipiscing dui, vel venenatis mauris sem in dui. Praesent a pretium quam. Mauris non mauris sit amet eros rutrum aliquam id ut sapien. Nulla aliquet fringilla sagittis. Pellentesque eu metus posuere nunc tincidunt dignissim in tempor dolor. Nulla cursus aliquet enim. Cras sapien risus, accumsan eu cursus ut, commodo vel velit. Praesent aliquet consectetur ligula, vitae iaculis ligula interdum vel. Integer faucibus faucibus felis.
+
+\begin{itemize}
+\item Ut vitae diam augue.
+\item Integer lacus ante, pellentesque sed sollicitudin et, pulvinar adipiscing sem.
+\item Maecenas facilisis, leo quis tincidunt egestas, magna ipsum condimentum orci, vitae facilisis nibh turpis et elit.
+\end{itemize}
+
+\begin{remark}
+content...
+\end{remark}
+
+\section{Pellentesque quis tortor}
+
+Nec urna malesuada sollicitudin. Nulla facilisi. Vivamus aliquam tempus ligula eget ornare. Praesent eget magna ut turpis mattis cursus. Aliquam vel condimentum orci. Nunc congue, libero in gravida convallis \cite{DBLP:conf/focs/HopcroftPV75}, orci nibh sodales quam, id egestas felis mi nec nisi. Suspendisse tincidunt, est ac vestibulum posuere, justo odio bibendum urna, rutrum bibendum dolor sem nec tellus.
+
+\begin{lemma} [Quisque blandit tempus nunc]
+Sed interdum nisl pretium non. Mauris sodales consequat risus vel consectetur. Aliquam erat volutpat. Nunc sed sapien ligula. Proin faucibus sapien luctus nisl feugiat convallis faucibus elit cursus. Nunc vestibulum nunc ac massa pretium pharetra. Nulla facilisis turpis id augue venenatis blandit. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
+\end{lemma}
+
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+
+\section{Morbi eros magna}
+
+Morbi eros magna, vestibulum non posuere non, porta eu quam. Maecenas vitae orci risus, eget imperdiet mauris. Donec massa mauris, pellentesque vel lobortis eu, molestie ac turpis. Sed condimentum convallis dolor, a dignissim est ultrices eu. Donec consectetur volutpat eros, et ornare dui ultricies id. Vivamus eu augue eget dolor euismod ultrices et sit amet nisi. Vivamus malesuada leo ac leo ullamcorper tempor. Donec justo mi, tempor vitae aliquet non, faucibus eu lacus. Donec dictum gravida neque, non porta turpis imperdiet eget. Curabitur quis euismod ligula.
+
+
+%%
+%% Bibliography
+%%
+
+%% Please use bibtex,
+
+\bibliography{lipics-v2021-sample-article}
+
+\appendix
+
+\section{Styles of lists, enumerations, and descriptions}\label{sec:itemStyles}
+
+List of different predefined enumeration styles:
+
+\begin{itemize}
+\item \verb|\begin{itemize}...\end{itemize}|
+\item \dots
+\item \dots
+%\item \dots
+\end{itemize}
+
+\begin{enumerate}
+\item \verb|\begin{enumerate}...\end{enumerate}|
+\item \dots
+\item \dots
+%\item \dots
+\end{enumerate}
+
+\begin{alphaenumerate}
+\item \verb|\begin{alphaenumerate}...\end{alphaenumerate}|
+\item \dots
+\item \dots
+%\item \dots
+\end{alphaenumerate}
+
+\begin{romanenumerate}
+\item \verb|\begin{romanenumerate}...\end{romanenumerate}|
+\item \dots
+\item \dots
+%\item \dots
+\end{romanenumerate}
+
+\begin{bracketenumerate}
+\item \verb|\begin{bracketenumerate}...\end{bracketenumerate}|
+\item \dots
+\item \dots
+%\item \dots
+\end{bracketenumerate}
+
+\begin{description}
+\item[Description 1] \verb|\begin{description} \item[Description 1]  ...\end{description}|
+\item[Description 2] Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\item[Description 3]  \dots
+%\item \dots
+\end{description}
+
+\cref{testenv-proposition} and \autoref{testenv-proposition} ...
+
+\section{Theorem-like environments}\label{sec:theorem-environments}
+
+List of different predefined enumeration styles:
+
+\begin{theorem}\label{testenv-theorem}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{theorem}
+
+\begin{lemma}\label{testenv-lemma}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{lemma}
+
+\begin{corollary}\label{testenv-corollary}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{corollary}
+
+\begin{proposition}\label{testenv-proposition}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{proposition}
+
+\begin{conjecture}\label{testenv-conjecture}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{conjecture}
+
+\begin{observation}\label{testenv-observation}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{observation}
+
+\begin{exercise}\label{testenv-exercise}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{exercise}
+
+\begin{definition}\label{testenv-definition}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{definition}
+
+\begin{example}\label{testenv-example}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{example}
+
+\begin{note}\label{testenv-note}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{note}
+
+\begin{note*}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{note*}
+
+\begin{remark}\label{testenv-remark}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{remark}
+
+\begin{remark*}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{remark*}
+
+\begin{claim}\label{testenv-claim}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{claim}
+
+\begin{claim*}\label{testenv-claim2}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{claim*}
+
+\begin{proof}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{proof}
+
+\begin{claimproof}
+Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
+\end{claimproof}
+
+\end{document}
