@@ -1,8 +1,10 @@
 \documentclass[a4paper,UKenglish,cleveref, autoref, thm-restate]{lipics-v2021}
 \hideLIPIcs
 
+\newcommand{\ident}[1]{\textsf{#1}}
+
 \bibliographystyle{plainurl}
-\title{The Choose-Your-Own-Adventure Calculus} % (Pearl)
+\title{The Choose-Your-Own-Adventure Calculus (Pearl/Brave New Idea)}
 
 \author{Tomas Petricek}{Charles University, Prague, Czechia}{tomas@tomasp.net}{0000-0002-7242-2208}{}
 \author{Jan Liam Verter}{Charles University, Prague, Czechia}{todo@todo}{}{}
@@ -10,7 +12,6 @@
 \ccsdesc[500]{Software and its engineering~General programming languages}
 \keywords{Interactive programming systems, Type providers, Proof assistants}
 \nolinenumbers
-
 
 % \funding{funding}
 % \acknowledgements{I want to thank \dots}
@@ -87,20 +88,137 @@ choose-your-own-adventure calculus supports of transfer of ideas across differen
 interactive programming systems.
 \end{enumerate}
 
-The main contribution of this paper is conceptual rather than technical. Programming language
-researchers have long focused on \emph{programming languages} rather than on a more general notion
-of interactive \emph{programming systems} \cite{rpg-2012-revolution,jakubovic-2023-techdims}.
-However, programming language theory methods can be equally useful for studying interactive
-systems~\cite{adams-2025-grove}. The choose-your-own-adventure-calculus is another step in this
-direction. It brings to light a pattern that is perhaps not surprising, but is very easy to
-overlook until it is given a name.
+The main contribution of this paper is conceptual rather than technical. We capture a
+pattern that is perhaps not surprising in retrospect, but that is easy to overlook until it is
+given a name. We use formal programming language theory methods to precisely describe
+interesting aspects of the pattern. Moreover, our work also confirms that programming
+language theory methods can be extremely effective for studying not just \emph{programming
+languages}, but also interactive \emph{programming systems}~\cite{jakubovic-2023-techdims}.
 
 \newpage
 
 \section{Motivation}
 \label{sec:motivation}
 
-~
+Computer scientists studying programming have long focused on programming languages as syntactic
+entities, sometimes neglecting the interactive environments in which the languages are inevitably
+embedded \cite{rpg-2012-revolution}. Notably, in many of the motivating examples that we draw
+from in this section, the interactive aspect of the system is only described in supplementary
+materials such as tutorial notes \cite{brady-2015-idris}, workshop papers \cite{syme-2013-inforich}
+or user guides \cite{altenkirch-1994-alf}. Only recently, programming language theory has been used
+to look at interactive environments \cite{adams-2025-grove,mayer-2018-bidirectional}. Our work aims
+to contribute to this research direction.
+
+The following four sections briefly review four different instances of the choose-your-own-adventure
+interaction pattern. In all of those, an interactive editor offers the user some kind of a
+completion list during working with the system.
+
+\begin{figure}[t]
+\includegraphics[width=0.7\textwidth]{fig/worldbank.png}
+\caption{F\# code editor showing completions offered by the World Bank type provider.}
+\label{fig:worldbank}
+\end{figure}
+
+\subparagraph{Type providers}
+
+F\# type providers \cite{syme-2013-inforich} are a mechanism that make it possible to integrate
+external data sources into the F\# type system. A type provider is a compiler extension, loaded and
+executed at compile-time and at edit-time. It can run arbitrary code to read the structure of
+external data and use it to generate a suitable statically-typed representation of the external
+data, typically as objects with members. Type providers can, for example, infer the type from a
+sample JSON \cite{petricek-2016-fsdata} or read a database schema.
+
+The example in Figure~\ref{fig:worldbank} shows a simple type provider for accessing information
+from the World Development Indicators database. The provided \ident{wb} object allows the programmer
+to access any indicator of any country in the database by choosing an appropriate \ident{[Country]}
+and an \ident{[Indicator]} in a chain of members
+\ident{wb}.\ident{Countries}.\ident{[Country]}.\ident{Indicator}.\ident{[Indicator]}.
+The result is a time series with values of the given indicator and country. More generally,
+the example can be seen as a special case of a type provider for slicing n-dimensional
+data cube \cite{petricek-2022-thegamma}. Here, we choose a fixed value for two of the three
+dimensions (country, indicator, time).
+
+When using the type provider, the user types the first line of code and trigger auto-completion
+by typing \ident{wb} followed by the dot. The rest of the code is constructed by choosing an
+option from a list and typing another dot.\footnote{This interaction pattern has been
+lightheartedly called \emph{dot-driven development} by Phil Trelford \cite{seemann-2021-head}.}
+
+
+\newpage
+
+\begin{figure}[t]
+\includegraphics[width=0.48\textwidth]{fig/thegamma1.png}~~
+\includegraphics[width=0.48\textwidth]{fig/thegamma2.png}
+\caption{Constructing a query in The Gamma. We count the number of gold and silver medals for
+each athlete and sort the data by the number of gold medals.}
+\label{fig:thegamma}
+\end{figure}
+
+\subparagraph{Data exploration}
+
+The Gamma~\cite{petricek-2022-thegamma} is a web-based programmatic data exploration environment
+for non-programmers. In The Gamma, type providers are the primary programming mechanism and they
+are used not just for data access, but also for constructing queries.
+
+The type provider shown in Figure~\ref{fig:thegamma} lets the user construct an SQL-like query by
+repeatedly choosing operations and their parameters \cite{petricek-2017-dotdriven}. It keeps track
+of the data schema and uses the schema to generate all possible valid parameters. When sorting
+data, it generates an object with two members for each columns -- one for ascending and one for
+descending sort. Similarly, grouping first offers all columns as possible sorting keys and then
+lets the user choose from a range of pre-defined aggregations (sum, count, average, concatenate).
+The system evaluates the query on the fly, providing a live preview during editing \cite{petricek-2020-live}.
+
+The interaction pattern is the same as above. The user triggers auto-completion by entering a
+data source and typing dot. They can then repeatedly select an operation and its parameters to
+construct a query. One notable difference is that the structure of the generated types is
+potentially infinite (the user can keep adding further operations) and so the types are generated
+lazily.
+
+\subparagraph {AI assistants}
+
+The third instance of the choose-your-own-adventure interaction pattern comes from work on
+semi-automatic data wrangling tools known as AI assistants \cite{petricek-2023-aias}.
+An AI assistant guides the analyst through a data wrangling problem such as reconciling mismatched
+datasets, filling missing values or inferring data format and types. An AI assistant tries to solve
+the problem automatically and suggests an initial data transformation, but it also generates a
+number of constraints that the user can choose from to refine the initial solution. If the initial
+solution is not correct, the user chooses a constraint and the AI assistant runs again, suggesting
+a new data transformation that respects the constraint.
+
+Figure~\ref{fig:aia} shows an example. It uses the datadiff \cite{sutton-2018-datadiff} AI
+assistant, running in a Wrattler notebook \cite{petricek-2018-wrattler}, to merge broadband
+quality data published by Ofcom for two subsequent years. The format of the CSV files differs.
+Some columns were added, some removed, all were renamed and their order has changed. In the
+example, we selected 6 columns from the year 2015 and want to find matching data from 2014.
+
+When the AI assistants runs automatically, it incorrectly maps the \ident{Urban.rural} (2014)
+column to \ident{Nation} (2015). This happens because both columns are categorical and have three
+values with similar distribution, but a data analyst can easily spot the mistake. To correct the
+error, they click the ``+'' button to add a constraint and choose \ident{Don't match Urban.rural
+and Nation} to specify that the two columns should not be matched. Datadiff then runs again and
+finds the correct matching.
+
+\begin{figure}[t]
+  \includegraphics[width=0.9\textwidth]{fig/aia.png}
+  \caption{aia}
+  \label{fig:aia}
+\end{figure}
+
+The interaction patter is the same as in the previous two cases. The analyst constructs the
+correct data transformation by repeatedly choosing from a list of options, until they obtain
+the desired result. However, the way the interaction pattern is used in this case differs.
+First, in the case of type providers, we are constructing a program (adding operations to a
+method chain). Now, we are collecting constraints and the AI assistant then synthesizes a
+data transformation (a script) based on those constraints. Second, in the case of type providers,
+the completion list offered all possible members of the object. Now, the list offers a choice of
+constraints that are recommended by the AI assistant, which may not be complete.
+
+\subparagraph{Interactive theorem provers}
+
+yo
+
+
+\newpage
 
 \section{Formal model}
 \label{sec:calculus}
@@ -121,9 +239,7 @@ overlook until it is given a name.
 \label{sec:applications}
 
 
-\cite{jakubovic-2023-techdims}
-\cite{petricek-2020-live}
-
+\cite{rein-2019-exploratory}
 
 \newpage
 
