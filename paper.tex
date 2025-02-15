@@ -2,6 +2,13 @@
 \hideLIPIcs
 
 \newcommand{\ident}[1]{\textsf{#1}}
+\newcommand{\sigmaN}{\sigma_0}
+\newcommand{\select}{\textnormal{\ident{choose}}}
+\newcommand{\preview}{\textnormal{\ident{preview}}}
+\newcommand{\links}{\textnormal{\ident{links}}}
+\newcommand{\choices}{\textnormal{\ident{choices}}}
+\newcommand{\op}{\textit{op}}
+\newcommand{\argmax}{\textit{arg}\,\textit{max}\,}
 
 \bibliographystyle{plainurl}
 \title{The Choose-Your-Own-Adventure Calculus (Pearl/Brave New Idea)}
@@ -23,7 +30,7 @@
 
 \begin{abstract}
 
-Some of the most remarkable results in mathematics reveal surprising connections between different
+Some of the most remarkable results in mathematics reveal connections between different
 branches of the discipline. The aim of this paper is to point out a modest, but still
 remarkable, similarity between a range of different interactive programming systems.
 
@@ -80,7 +87,7 @@ of options offered by the system (Section~\ref{sec:calculus}).
 \item The calculus allows us to make the aforementioned subtle differences precise. We define the
 notions of \emph{correctness} and \emph{completeness} for the choose-your-own-adventure calculus.
 To distinguish the different ways of embedding the interactions in the edited programs, we
-also formally define \emph{base-level} and \emph{meta-level} integration of the system.
+also formally define \emph{internal} and \emph{external} mode of system integration.
 
 \item We show that various programmer assistance tools, such as search and AI-based recommendations
 can be built on top of the primitives offered by the calculus, showing how the
@@ -97,34 +104,32 @@ languages}, but also interactive \emph{programming systems}~\cite{jakubovic-2023
 
 \newpage
 
+\begin{figure}[t]
+  \includegraphics[width=0.7\textwidth]{fig/worldbank.png}
+  \caption{F\# code editor showing completions offered by the World Bank type provider.}
+  \label{fig:worldbank}
+\end{figure}
+
 \section{Motivation}
 \label{sec:motivation}
 
 Computer scientists studying programming have long focused on programming languages as syntactic
-entities, sometimes neglecting the interactive environments in which the languages are inevitably
+entities, sometimes neglecting the interactive environments in which they are inevitably
 embedded \cite{rpg-2012-revolution}. Notably, in many of the motivating examples that we draw
 from in this section, the interactive aspect of the system is only described in supplementary
-materials such as tutorial notes \cite{brady-2015-idris}, workshop papers \cite{syme-2013-inforich}
-or user guides \cite{altenkirch-1994-alf}. Only recently, programming language theory has been used
-to look at interactive environments \cite{adams-2025-grove,mayer-2018-bidirectional}. Our work aims
-to contribute to this research direction.
+materials \cite{brady-2015-idris,syme-2013-inforich,altenkirch-1994-alf}. Only recently, programming
+language theory started to be used to study interactive environments
+\cite{adams-2025-grove,mayer-2018-bidirectional}. Our work contributes to this research direction.
 
-The following four sections briefly review four different instances of the choose-your-own-adventure
-interaction pattern. In all of those, an interactive editor offers the user some kind of a
-completion list during working with the system.
-
-\begin{figure}[t]
-\includegraphics[width=0.7\textwidth]{fig/worldbank.png}
-\caption{F\# code editor showing completions offered by the World Bank type provider.}
-\label{fig:worldbank}
-\end{figure}
+The following sections review four different instances of the choose-your-own-adventure
+interaction pattern. In all of those, an interactive editor offers the user some kind of~a~com\-pletion list during working with the system.
 
 \subparagraph{Type providers}
 
-F\# type providers \cite{syme-2013-inforich} are a mechanism that make it possible to integrate
-external data sources into the F\# type system. A type provider is a compiler extension, loaded and
+F\# type providers \cite{syme-2013-inforich} are a mechanism for integrating external data
+sources into the F\# type system. A type provider is a compiler extension, loaded and
 executed at compile-time and at edit-time. It can run arbitrary code to read the structure of
-external data and use it to generate a suitable statically-typed representation of the external
+external data and use it to generate a suitable statically-typed representation of the
 data, typically as objects with members. Type providers can, for example, infer the type from a
 sample JSON \cite{petricek-2016-fsdata} or read a database schema.
 
@@ -133,12 +138,12 @@ from the World Development Indicators database. The provided \ident{wb} object a
 to access any indicator of any country in the database by choosing an appropriate \ident{[Country]}
 and an \ident{[Indicator]} in a chain of members
 \ident{wb}.\ident{Countries}.\ident{[Country]}.\ident{Indicator}.\ident{[Indicator]}.
-The result is a time series with values of the given indicator and country. More generally,
+The result is a time series with values for the given indicator and a country. More generally,
 the example can be seen as a special case of a type provider for slicing n-dimensional
-data cube \cite{petricek-2022-thegamma}. Here, we choose a fixed value for two of the three
+data cube \cite{petricek-2022-thegamma} -- we choose a fixed value for two of the three
 dimensions (country, indicator, time).
 
-When using the type provider, the user types the first line of code and trigger auto-completion
+When using the type provider, the user types the first line of code and triggers auto-completion
 by typing \ident{wb} followed by the dot. The rest of the code is constructed by choosing an
 option from a list and typing another dot.\footnote{This interaction pattern has been
 lightheartedly called \emph{dot-driven development} by Phil Trelford \cite{seemann-2021-head}.}
@@ -156,30 +161,29 @@ each athlete and sort the data by the number of gold medals.}
 
 \subparagraph{Data exploration}
 
-The Gamma~\cite{petricek-2022-thegamma} is a web-based programmatic data exploration environment
-for non-programmers. In The Gamma, type providers are the primary programming mechanism and they
+The Gamma~\cite{petricek-2022-thegamma} is a programmatic data exploration environment
+for non-programmers. In The Gamma, type providers are the primary programming mechanism. They
 are used not just for data access, but also for constructing queries.
 
 The type provider shown in Figure~\ref{fig:thegamma} lets the user construct an SQL-like query by
 repeatedly choosing operations and their parameters \cite{petricek-2017-dotdriven}. It keeps track
-of the data schema and uses the schema to generate all possible valid parameters. When sorting
-data, it generates an object with two members for each columns -- one for ascending and one for
-descending sort. Similarly, grouping first offers all columns as possible sorting keys and then
+of the schema and uses it to generate all possible valid parameters. When sortin data, it generates
+an object with two members for each columns -- one for ascending and one for descending sort.
+Similarly, the grouping operation first offers all columns as possible grouping keys and then
 lets the user choose from a range of pre-defined aggregations (sum, count, average, concatenate).
-The system evaluates the query on the fly, providing a live preview during editing \cite{petricek-2020-live}.
+The system also evaluates the query on the fly, providing a live preview during editing \cite{petricek-2020-live}.
 
-The interaction pattern is the same as above. The user triggers auto-completion by entering a
-data source and typing dot. They can then repeatedly select an operation and its parameters to
-construct a query. One notable difference is that the structure of the generated types is
-potentially infinite (the user can keep adding further operations) and so the types are generated
-lazily.
+The interaction pattern is the same as before. After the usertriggers auto-completion, they
+repeatedly select an operation and its parameters to construct a query. One notable difference
+is that the structure of the generated types is potentially infinite (the user can keep adding
+further operations) and so the types are generated lazily.
 
-\subparagraph {AI assistants}
+\subparagraph{AI assistants}
 
-The third instance of the choose-your-own-adventure interaction pattern comes from work on
+The third instance of the choose-your-own-adventure interaction pattern comes from the work on
 semi-automatic data wrangling tools known as AI assistants \cite{petricek-2023-aias}.
 An AI assistant guides the analyst through a data wrangling problem such as reconciling mismatched
-datasets, filling missing values or inferring data format and types. An AI assistant tries to solve
+datasets, filling missing values or inferring data format and types. An AI assistant solves
 the problem automatically and suggests an initial data transformation, but it also generates a
 number of constraints that the user can choose from to refine the initial solution. If the initial
 solution is not correct, the user chooses a constraint and the AI assistant runs again, suggesting
@@ -187,48 +191,213 @@ a new data transformation that respects the constraint.
 
 Figure~\ref{fig:aia} shows an example. It uses the datadiff \cite{sutton-2018-datadiff} AI
 assistant, running in a Wrattler notebook \cite{petricek-2018-wrattler}, to merge broadband
-quality data published by Ofcom for two subsequent years. The format of the CSV files differs.
-Some columns were added, some removed, all were renamed and their order has changed. In the
+quality data published by Ofcom for two subsequent years. The format of the CSV files for the
+two years differs. Columns were added, removed, renamed and their order has changed. In the
 example, we selected 6 columns from the year 2015 and want to find matching data from 2014.
 
-When the AI assistants runs automatically, it incorrectly maps the \ident{Urban.rural} (2014)
-column to \ident{Nation} (2015). This happens because both columns are categorical and have three
-values with similar distribution, but a data analyst can easily spot the mistake. To correct the
-error, they click the ``+'' button to add a constraint and choose \ident{Don't match Urban.rural
-and Nation} to specify that the two columns should not be matched. Datadiff then runs again and
-finds the correct matching.
+When the AI assistants runs automatically, it correctly maps the numerical columns, but it
+incorrectly maps the \ident{Urban.rural} (2014) column to \ident{Nation} (2015). This happens
+because both columns are categorical and have three values with similar distribution. A data
+analyst can easily spot the mistake. They click the ``+'' button to add a constraint and choose
+\ident{Don't match Urban.rural and Nation} to specify that the two columns should not be matched.
+Datadiff then runs again and finds the correct matching.
 
 \begin{figure}[t]
   \includegraphics[width=0.9\textwidth]{fig/aia.png}
-  \caption{aia}
+  \caption{Using the datadiff AI assistant to reconcile the structure of the two datasets.
+    The user is offered a list of constraints to prevent or force matching between specific columns.}
   \label{fig:aia}
 \end{figure}
 
+~
+
 The interaction patter is the same as in the previous two cases. The analyst constructs the
 correct data transformation by repeatedly choosing from a list of options, until they obtain
-the desired result. However, the way the interaction pattern is used in this case differs.
-First, in the case of type providers, we are constructing a program (adding operations to a
-method chain). Now, we are collecting constraints and the AI assistant then synthesizes a
-data transformation (a script) based on those constraints. Second, in the case of type providers,
-the completion list offered all possible members of the object. Now, the list offers a choice of
-constraints that are recommended by the AI assistant, which may not be complete.
+the desired result. However, the way the interaction pattern is implemented differs.
+First, in the case of type providers, we are gradually constructing a program by adding operations to
+a method chain. Now, the AI assistant synthesizes a data transformation (program) and we are
+gradually adding constraints to control the synthesis. Second, in the case of type providers,
+the completion list offered all possible members of the object. Now, the list offers
+constraints recommended by the AI assistant which may not be complete.
+
+\newpage
+
+\begin{figure}[t]
+  \includegraphics[width=0.6\textwidth]{fig/alf.png}
+  \caption{Constructing a proof of the transitivity of the $\leq$ relation in the \textsc{Alf}
+    editor. The user is offered a range of variables and constructors in scope at the current
+    location. \cite{altenkirch-1994-alf}}
+  \label{fig:alf}
+\end{figure}
+
 
 \subparagraph{Interactive theorem provers}
+A fourth example of the choose-your-own-adventure interactive pattern can be found in interactive
+theorem provers. When writing programs in systems like Idris \cite{brady-2021-idris2}, the
+user typically works by stating the desired conclusion and filling the implementation with a hole.
+The system provides a range of interactive editing capabilities to fill the holes \cite{mcbride-1999-dependently}.
+It can, for example, generate a case split or search for a proof \cite{brady-2015-idris}.
 
-yo
+Systems like Idris provide key bindings to invoke the completions, but the functionality could
+also be offered through a user interface. An example that illustrates this is the interactive editor
+for the \textsc{Alf} theorem prover \cite{magnusson-1994-alf}, which is based on the refinement of
+an incomplete proof object \cite{altenkirch-1994-alf}. This is illustrated in Figure~\ref{fig:alf}.
+The user is proving the transitivity of the $\leq$ relation for Peano arithmetic natural numbers.
+They pattern match on the proof argument $p$ and complete the first branch. For the second branch,
+they need to fill a hole $?_{p2}$ (called a wildcard in \textsc{Alf}). They trigger a completion
+and a pop-up menu shows the available variables and constructors, including \ident{leq\_trans} that
+can be used to complete the proof. After choosing \ident{leq\_trans}, two new holes are generated
+for its arguments. Those can be, again, filled interactively, by choosing $p_1$ and $p$ from the
+completion.
 
+The interaction pattern is again the same. The user repeatedly triggers a completion and uses
+it to refine and complete their proof by filling holes. There are subtle differences too. Unlike
+with AI assistants, each completion directly refines the proof that the user is editing. Unlike
+with type providers, a completion may generate multiple new holes, rather than just adding to a
+chain of operations.
+
+The \textsc{Alf} editor is a historical example, but a similar user interface could be built for
+systems like Idris or Coq. The two would work differently. As in \textsc{Alf}, Idris source code
+represents the proof itself and a completion would replace a hole with a suggested term. In Coq,
+the proof is a series of tactic invocations and so selected completions would be added to this
+list and would form a trace of the interaction with the user.
 
 \newpage
 
 \section{Formal model}
 \label{sec:calculus}
 
-~
+A system that implements the choose-your-own-adventure interaction pattern repeatedly offers
+the user a range of options to choose from. Each of the options is designated by an identifier.
+The system also maintains a state during the process which determines subsequent options. The state
+may not be visible to the user, but the user can always explicitly request the program constructed
+so far.
+
+We can think of the interaction with the system as navigating through a tree structure, starting
+from a root and choosing one of the possible branches in each step.\footnote{Serving as another
+evidence for the surprising effectiveness of the concept of a tree \cite{nesetril-2005-strom}.}
+In the following definition, the key $\choices$ operation can thus be seen as returning
+branches of a given node.
+
+\begin{definition}[Choose-your-own-adventure system]\label{def:calculus}
+Given expressions $e\in \mathbb{E}$ and states $\sigma \in \Sigma$, a choose-your-own-adventure
+system is a pair of operations \choices, \select\ such that:
+
+\vspace{-0.25em}
+\begin{itemize}
+  \item $\choices(\sigma) = (\iota_1\mapsto\sigma_1, \ldots, \iota_n\mapsto\sigma_n)$ is
+    an operation that takes a state and generates options designated by an identifier $\iota_i$
+    and represented by a state $\sigma_i$,
+  \item $\select(\sigma) &=& e$ is an operation that returns generated program for a given state.
+\end{itemize}
+\end{definition}
+
+The definition is not a programming language calculus in the usual sense in that it does not
+define a concrete syntax with reduction rules. It is an abstract algebraic structure that captures
+the structure of a system that supports the choose-your-own-adventure interaction pattern.
+The definition is close to that of an AI assistant \cite{petricek-2023-aias}, which is written
+using a language specific for the data wrangling domain (such as cleaning scripts or input and
+output data) but is structurally similar. It is also worth noting that the definition may describe
+not just trees, but also graphs with cycles -- a system can return to an already visited state.
+This is not practically useful, but it does not pose a theoretical problem.
+
+\subparagraph{External mode of embedding}
+One of the subtle questions about the choose-your-own-adventure pattern raised in the introduction
+concerns the different ways in which a trace of the interaction is embedded in the interactively
+constructed program. In the \emph{external mode}, the interaction results in code that becomes a
+part of the edited program, but it is not possible to reconstruct the steps used to generate the code.
+
+The choose-your-own-adventure interaction pattern is typically used to complete a partial program.
+To model this, we assume that the host language has a notion of a hole, written as~$?$
+and that a user can select a part of program to invoke the completion on. We write $E[e]$ for a
+completion context, akin to evaluation contexts in operational semantics.
+
+We assume that, for a program containing a hole in a completion context $E[?]$, we can construct
+an initial choose-your-own-adventure state using an operation
+$\ident{init}(E[?])=\sigmaN$.
+
+\begin{definition}\label{def:external}
+An expression $E[?]$ is completed as $E[e]$ via external embedding of an interaction with
+a choose-your-own-adventure system consisting of \choices\ and \select\ if:
+
+\vspace{-0.25em}
+\raggedright
+\begin{enumerate}
+\item $\ident{init}(E[?]) = \sigmaN$ obtains the initial state of a choose-your-own-interaction system,
+\item $\sigma_n$ is a system state such that $\forall i\in{1\ldots n}.(\iota_i\mapsto\sigma_i)\in\choices{(\sigma_{n-1})}$,
+  i.e.,~the user\\ makes a series of choices resulting in a final state of the system $\sigma_n$,
+\item $E[e]$ where $e=\select(\sigma_n)$, i.e.,~the final program is constructed by replacing the hole
+  in the completion context with the expression $e$ generated from $\sigma_n$.
+\end{enumerate}
+\end{definition}
+
+As we will see when we revisit the earlier examples formally, the external mode of embedding is
+used, for example, in the case of interactive theorem provers like \textsc{Alf} or Idris.
+In those systems, the user triggers the completion on a proof (program) containing a hole.
+They then fill the hole and, possibly iteratively, further holes in the generated proof. The final
+expression is embedded in the source code, but it does not indicate what options, identified by
+$\iota_1, \ldots, \iota_n$, were selected in the process.
+
+\subparagraph{Internal mode of embedding}
+In the \emph{internal mode}, a trace of the interaction with a choose-your-own-adventure system
+is embedded directly in the constructed program. This is the case with type providers, where a
+user chooses a sequence of object members to be accessed. The same would be the case in a completion
+system for Coq that would offer tactics to apply, becuase the resulting proof would contain a
+record of the selected tactics.
+
+To talk about the internal mode formally, we again need the \ident{init} operation, but also an
+operation \ident{decode} that extracts identifiers of invoked completions from an expression.
+An internal embedding is the same as external embedding with an additional constraint:
+
+\begin{definition}\label{def:internal}
+An expression $E[?]$ is completed as $E[e]$ via internal embedding of an interaction with
+a choose-your-own-adventure system consisting of \choices\ and \select\ if:
+
+\vspace{-0.25em}
+\raggedright
+\begin{enumerate}
+\item $E[?]$ is completed as $E[e]$ via external embedding using \ident{init}, \choices\ and \select\\
+  through a series of choices designated by identifiers $\iota_1, \ldots, \iota_n$,
+\item it also holds that $\ident{decode}(e)=(\iota_1, \ldots, \iota_n)$.
+\end{enumerate}
+\end{definition}
+
+If a choose-your-own-adventure system is integrated in a programming language
+through internal embedding, we can reconstruct the choices through which the user constructed
+an expression $e$ in a completion context $E[e]$, assuming they used the interactive system rather
+than entering the code directly. This also means that we can reconstruct the final state $\sigma_n$
+of the system by starting from $\ident{init}(E[?])$ and following the choices specified by
+$\iota_1, \ldots, \iota_n$.
+
 
 \section{Examples}
 \label{sec:examples}
 
 ~
+
+The internal mode can also be used when
+working with theorem provers.
+
+In Coq, where proofs are represented as series of tactics,
+
+However, this would also be case in a
+completion engine for the Coq proof system that would offer a choice of tactics to apply, because
+Coq proofs are represented
+
+
+\subsection{Data exploration}
+
+~
+
+\subsection{AI assistants}
+
+~
+
+\subsection{Interactive theorem proving}
+
+~
+
+\newpage
 
 \section{Properties}
 \label{sec:properties}
