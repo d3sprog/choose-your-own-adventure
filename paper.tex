@@ -2,13 +2,15 @@
 \hideLIPIcs
 
 \newcommand{\ident}[1]{\textsf{#1}}
+\newcommand{\ddident}[1]{\guillemotleft\ident{#1}\guillemotright}
 \newcommand{\sigmaN}{\sigma_0}
 \newcommand{\select}{\textnormal{\ident{choose}}}
-\newcommand{\preview}{\textnormal{\ident{preview}}}
-\newcommand{\links}{\textnormal{\ident{links}}}
 \newcommand{\choices}{\textnormal{\ident{choices}}}
 \newcommand{\op}{\textit{op}}
-\newcommand{\argmax}{\textit{arg}\,\textit{max}\,}
+\newcommand{\vect}[1]{\lbrack #1 \rbrack}
+%\newcommand{\preview}{\textnormal{\ident{preview}}}
+%\newcommand{\links}{\textnormal{\ident{links}}}
+%\newcommand{\argmax}{\textit{arg}\,\textit{max}\,}
 
 \bibliographystyle{plainurl}
 \title{The Choose-Your-Own-Adventure Calculus (Pearl/Brave New Idea)}
@@ -124,7 +126,7 @@ language theory started to be used to study interactive environments
 The following sections review four different instances of the choose-your-own-adventure
 interaction pattern. In all of those, an interactive editor offers the user some kind of~a~com\-pletion list during working with the system.
 
-\subparagraph{Type providers}
+\subparagraph{Type providers.}
 
 F\# type providers \cite{syme-2013-inforich} are a mechanism for integrating external data
 sources into the F\# type system. A type provider is a compiler extension, loaded and
@@ -159,7 +161,7 @@ each athlete and sort the data by the number of gold medals.}
 \label{fig:thegamma}
 \end{figure}
 
-\subparagraph{Data exploration}
+\subparagraph{Data exploration.}
 
 The Gamma~\cite{petricek-2022-thegamma} is a programmatic data exploration environment
 for non-programmers. In The Gamma, type providers are the primary programming mechanism. They
@@ -178,7 +180,7 @@ repeatedly select an operation and its parameters to construct a query. One nota
 is that the structure of the generated types is potentially infinite (the user can keep adding
 further operations) and so the types are generated lazily.
 
-\subparagraph{AI assistants}
+\subparagraph{AI assistants.}
 
 The third instance of the choose-your-own-adventure interaction pattern comes from the work on
 semi-automatic data wrangling tools known as AI assistants \cite{petricek-2023-aias}.
@@ -231,7 +233,7 @@ constraints recommended by the AI assistant which may not be complete.
 \end{figure}
 
 
-\subparagraph{Interactive theorem provers}
+\subparagraph{Interactive theorem provers.}
 A fourth example of the choose-your-own-adventure interactive pattern can be found in interactive
 theorem provers. When writing programs in systems like Idris \cite{brady-2021-idris2}, the
 user typically works by stating the desired conclusion and filling the implementation with a hole.
@@ -288,7 +290,7 @@ system is a pair of operations \choices, \select\ such that:
   \item $\choices(\sigma) = (\iota_1\mapsto\sigma_1, \ldots, \iota_n\mapsto\sigma_n)$ is
     an operation that takes a state and generates options designated by an identifier $\iota_i$
     and represented by a state $\sigma_i$,
-  \item $\select(\sigma) &=& e$ is an operation that returns generated program for a given state.
+  \item $\select(\sigma) = e$ is an operation that returns generated program for a given state.
 \end{itemize}
 \end{definition}
 
@@ -301,7 +303,7 @@ output data) but is structurally similar. It is also worth noting that the defin
 not just trees, but also graphs with cycles -- a system can return to an already visited state.
 This is not practically useful, but it does not pose a theoretical problem.
 
-\subparagraph{External mode of embedding}
+\subparagraph{External mode of embedding.}
 One of the subtle questions about the choose-your-own-adventure pattern raised in the introduction
 concerns the different ways in which a trace of the interaction is embedded in the interactively
 constructed program. In the \emph{external mode}, the interaction results in code that becomes a
@@ -338,7 +340,7 @@ They then fill the hole and, possibly iteratively, further holes in the generate
 expression is embedded in the source code, but it does not indicate what options, identified by
 $\iota_1, \ldots, \iota_n$, were selected in the process.
 
-\subparagraph{Internal mode of embedding}
+\subparagraph{Internal mode of embedding.}
 In the \emph{internal mode}, a trace of the interaction with a choose-your-own-adventure system
 is embedded directly in the constructed program. This is the case with type providers, where a
 user chooses a sequence of object members to be accessed. The same would be the case in a completion
@@ -370,9 +372,105 @@ of the system by starting from $\ident{init}(E[?])$ and following the choices sp
 $\iota_1, \ldots, \iota_n$.
 
 
+\newpage
 \section{Examples}
 \label{sec:examples}
 
+We now revisit the four examples from Section~\ref{sec:motivation} and show how they fit the
+above formal model. All four examples rely on some domain-specific logic. We describe what
+information the logic provides, but do not model it formally. This has been done elsewhere,
+in works describing the individual systems.
+
+To show how the model lets us distinguish subtle details of interactive programming systems,
+we start with a model of data exploration system that is inspired by The Gamma, but differs in
+one notable way. We then discuss type providers more generally and show how to correctly model
+The Gamma. We then revisit the remaining two examples.
+
+\subsection{Data exploration}
+
+In The Gamma, the choose-your-own-adventure interaction pattern is used to construct a
+query that transforms the given input data. The query is a sequence of operations with parameters,
+$\op(p_1, \ldots, p_n)$, loosely modelled after relational algebra \cite{codd-1970-relational}.
+
+In The Gamma, the query is hidden from the data analyst. Behind the scenes, the system generates
+objects with members and the identifiers designating individual options are the names of those
+members. The operation is encapsulated in the code of the accessor of the member. In the
+simplified model in this section we ignore this fact. The model presented here directly
+generates code that calls the underlying operations. For example, assume that the user makes
+the following choices:
+\[
+\textnormal{\ddident{group data}\,.\,\ddident{by Athlete}\,.\,\ddident{sum Gold}\,.\,\ddident{count all}\,.\,\ddident{then}}
+\]
+In The Gamma, the individual identifiers become object members and they are included as
+a member chain in the generated code. In the following simplified model, the completion
+instead fills the hole with an expression representing the operation:
+\[
+\ident{group}(\texttt{"Athlete"}, \ident{sum}(\texttt{"Gold"}), \ident{count}())
+\]
+The two approaches have different human-computer interaction trade-offs. In terms of cognitive
+dimensions \cite{green-1989-cogdims,blackwell-2003-cogdims}, the latter has a greater closeness
+of mapping, while the former is less cognitively demanding to read for a non-programmer.
+As discussed in Section~\ref{sec:properties}, the two implementations of the choose-your-own-adventure
+interaction pattern also differ in terms of their formal properties.
+
+\subparagraph{Formal model.}
+The options generated by The Gamma let the user select both the next operation and the parameters
+of the previously selected operation. The available operations and parameters are generated
+based on a schema $S$ that is transformed by the operations. The state of the system $\sigma$
+contains the current schema $S$ and the operations applied so far. In the following, we write
+$\op(\boldsymbol{p})$ for an operation with a vector of parameters:
+\[
+\sigma = S, \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n})}\\
+\]
+The behaviour of the $\choices$ operation depends on whether the last operation in the sequence
+expects further parameters or whether it is fully-specified. In the first case, the recommendation
+engine generates possible additional parameter values $p_', p_'', \ldots$ based on the schema $S$,
+the operation $\op_n$ and the already known parameters $\boldsymbol{p_n}$.
+The $\choices$ operation then generates options that add the additional parameter. We generated the
+identifiers $\iota_',\iota_'',\ldots$ based on the state and the parameter value, such as
+\ddident{by Gold descending}. Note that adding a parameter may also result in a new schema
+$S', S'', \ldots$ (which the recommendation engine computes based on the previous schema and the new parameter):
+\[
+\begin{array}{l}
+\choices(S, \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n})}) =\\
+\qquad (S', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n},p')}), \\
+\qquad (S'', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n},p'')}), ~\ldots
+\end{array}
+\]
+If the last operation takes no further parameters, the system produces a choice
+of possible next operations $\op', \op'', \ldots$. Again, we are also given new schemas $S', S'', \ldots$
+and we generate identifiers $\iota',\iota'',\ldots$ based on the operation name. The $\ident{choices}$
+operation then returns options that add the additional operation:
+\[
+\begin{array}{l}
+\choices(S, (\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n}))) =\\
+\qquad (S', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n}), \op'()}), \\
+\qquad (S'', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n}), \op''()}), ~\ldots
+\end{array}
+\]
+Finally, the $\select$ operation takes the state $\sigma$ and generates an expression that represents
+the data transformation. This is only possible if all parameters are fully-specified. For simplicity,
+assume that $k$ is the index of the last fully-specified operation (either $n$ or $n-1$). If the
+host language lets us compose functions using $f\circ g$, we can write:
+\[
+\select(S, (\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n}))) = \op_1(\boldsymbol{p_1}) \circ \ldots \circ \op_k(\boldsymbol{p_k})
+\]
+The recommendation engine behind The Gamma provides a domain-specific logic for generating
+possible operations and their parameters based on the current schema of the data. As the above
+definition shows, this underlying engine can be easily exposed through the common
+choose-your-own-adventure interface.
+
+\subsection{Type providers}
+
+revisit
+
+~
+
+\subsection{AI assistants}
+
+~
+
+\subsection{Interactive theorem proving}
 ~
 
 The internal mode can also be used when
@@ -383,17 +481,6 @@ In Coq, where proofs are represented as series of tactics,
 However, this would also be case in a
 completion engine for the Coq proof system that would offer a choice of tactics to apply, because
 Coq proofs are represented
-
-
-\subsection{Data exploration}
-
-~
-
-\subsection{AI assistants}
-
-~
-
-\subsection{Interactive theorem proving}
 
 ~
 
