@@ -10,7 +10,7 @@
 \newcommand{\vect}[1]{\lbrack #1 \rbrack}
 %\newcommand{\preview}{\textnormal{\ident{preview}}}
 %\newcommand{\links}{\textnormal{\ident{links}}}
-%\newcommand{\argmax}{\textit{arg}\,\textit{max}\,}
+\DeclareMathOperator{\argmax}{arg\,max}
 
 \bibliographystyle{plainurl}
 \title{The Choose-Your-Own-Adventure Calculus (Pearl/Brave New Idea)}
@@ -286,9 +286,10 @@ Given expressions $e\in \mathbb{E}$ and states $\sigma \in \Sigma$, a choose-you
 system is a pair of operations \choices, \select\ such that:
 
 \vspace{-0.25em}
+\raggedright
 \begin{itemize}
-  \item $\choices(\sigma) = (\iota_1\mapsto\sigma_1, \ldots, \iota_n\mapsto\sigma_n)$ is
-    an operation that takes a state and generates options designated by an identifier $\iota_i$
+  \item $\choices(\sigma) = \{\iota_1\mapsto\sigma_1, \ldots, \iota_n\mapsto\sigma_n\}$ is
+    an operation that takes a state and \\ generates options designated by an identifier $\iota_i$
     and represented by a state $\sigma_i$,
   \item $\select(\sigma) = e$ is an operation that returns generated program for a given state.
 \end{itemize}
@@ -433,8 +434,8 @@ $S', S'', \ldots$ (which the recommendation engine computes based on the previou
 \[
 \begin{array}{l}
 \choices(S, \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n})}) =\\
-\qquad (S', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n},p')}), \\
-\qquad (S'', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n},p'')}), ~\ldots
+\qquad \{\; \iota' \mapsto (S', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n},p')}), \\
+\qquad\;\;    \iota'' \mapsto (S'', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n},p'')}), ~\ldots~\}
 \end{array}
 \]
 If the last operation takes no further parameters, the system produces a choice
@@ -444,8 +445,8 @@ operation then returns options that add the additional operation:
 \[
 \begin{array}{l}
 \choices(S, (\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n}))) =\\
-\qquad (S', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n}), \op'()}), \\
-\qquad (S'', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n}), \op''()}), ~\ldots
+\qquad \{\; \iota' \mapsto (S', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n}), \op'()}), \\
+\qquad \;\; \iota'' \mapsto (S'', \vect{\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n}), \op''()}), ~\ldots~\}
 \end{array}
 \]
 Finally, the $\select$ operation takes the state $\sigma$ and generates an expression that represents
@@ -461,14 +462,152 @@ definition shows, this underlying engine can be easily exposed through the commo
 choose-your-own-adventure interface.
 
 \subsection{Type providers}
+The type provider mechanism in F\# operates at the level of the type system. It is not a merely an
+editor feature. A type provider for a data source, such as the World Development Indicators database,
+generates a collection of types that model the external data source. In F\#, the types are classes
+with members that implement the logic to retrieve data at runtime.
 
-revisit
+The auto-completion mechanism in F\# code editors, which implements the choose-your-own-adventure
+interaction pattern, is not specific to type providers. It offers a list of members of an object
+based on its type. We model the completion as an iterative process, repeatedly adding further
+members to a chain. The state $\sigma$ thus consists of an initial expression on which the
+completion is invoked, a chain of selected members and the type of the last member.
 
-~
+To model the completion mechanism, we also need to model information about types. We loosely
+follow the Foo calculus model \cite{petricek-2016-fsdata} and write $\mathbb{C}$ for a set
+of class definitions, each consisting of an implicit class constructor and a collection of
+members $M$:
+\[
+\begin{array}{rcl}
+\sigma &=& e . \iota_1 . \lbrack\ldots\rbrack . \iota_n, C\\
+\mathbb{C} &=& \{ C \mapsto \ident{type}~C(\overline{x:\tau}) = \overline{M},~\ldots~ \}\\
+M &=& \ident{member}~\iota\!:\!C=e
+\end{array}
+\]
+Each member in the Foo calculus consists of a of a name $\iota$, return type $C$ and implementation
+$e$. For our purposes, we only need the type information and so the operations that define the
+choose-your-own-adventure are parameterized by the set of classes $\mathbb{C}$.
+
+The $\choices_\mathbb{C}$ operation finds the class definition corresponding to the type of the
+last member in the current chain. It offers choices appending each of the available
+members to the current chain. The $\select_\mathbb{C}$ operation returns the constructed
+member chain:
+
+\[
+\begin{array}{l}
+\choices_\mathbb{C}(e . \iota_1 . \lbrack\ldots\rbrack . \iota_n, C) =\\
+\qquad \{\; \iota' \mapsto (e . \iota_1 . \lbrack\ldots\rbrack . \iota_n . \iota', C')\\
+\qquad \;\; \iota'' \mapsto (e . \iota_1 . \lbrack\ldots\rbrack . \iota_n . \iota'', C''), ~\ldots~\}\\[1em]
+\end{array}
+\]\vspace{-2em}
+\[
+\begin{array}{rcl}
+\quad \textnormal{where}~\mathbb{C}(C) &=& \ident{type}~C(\overline{x:\tau}) = M', M'', \ldots\\
+\quad \textnormal{and}~M' &=& \ident{member}~\iota'\!:\!C'=e'
+\end{array}
+\]\vspace{-0.5em}
+\[
+\select_\mathbb{C}(e . \iota_1 . \lbrack\ldots\rbrack . \iota_n, C) = e . \iota_1 . \ldots . \iota_n
+\]
+The model does not directly refer to type providers. Those are responsible solely for generating
+the type definitions in $\mathbb{C}$ as documented in earlier work \cite{petricek-2016-fsdata}.
+It is worth noting that the type provider for data exploration, implemented by The Gamma,
+additionally needs to generate classes lazily \cite{petricek-2017-dotdriven}. To model this aspect,
+the simple lookup $\mathbb{C}(C)$ needs to be replaced with an operation that returns the type
+definition, alongside with a new context $\mathbb{C}'$ that contains additional generated
+type definitions (return types for all the members of the class~$C$).
+
+The model follows the internal mode of embedding the interaction in the program. It is easy to
+define the \ident{decode} operation that takes the resulting generated expression and returns the
+sequence of choices, because the choices are items of the member chain. A slight caveat is that
+the completion is not invoked on an empty hole, but on a hole that contains the initial expression
+on which the completion is applied. We can model this using filled holes \cite{omar-2019-holes}
+and write $?_e$ for a hole containing the initial expression $e$. The $\ident{init}(?_e)$ operation
+then returns $e$ alongside with an empty chain and the type of $e$.
+
+As noted earlier, The Gamma does not embed query expressions directly into the generated code.
+It uses the same model as type providers and generates choices as members of
+types behind the scenes. We return to the differences between the two models in
+Section~\ref{sec:properties}.
 
 \subsection{AI assistants}
+AI assistants guide the analyst through a data wrangling task. They
+generate a data cleaning script, taking into account constraints selected by the user.
+Most AI assistants obtain the script by performing statistical optimization with respect
+to a set of constraints specified by the user. That is, they look for an expression from the
+set of all possible expressions that optimizes some objective function that assigns score to
+the expression with respect to the given input data. Note that AI assistants do not iterate
+over all possible expressions. They use a machine learning method to approximate a solution
+to the problem.
 
-~
+An optimization-based AI assistant \cite{petricek-2023-aias} thus provides another, very
+different, way of implementing the choose-your-own-adventure pattern. The assistant operates
+with respect to some input data $X$ that does not change during the interaction and so we
+parameterize the choose-your-own-adventure calculus operations by the data.
+The input data $X$ can be actual input data or a representative sample and so the AI assistant
+can be use past data to infer a cleaning script that will be used on new inputs.
+
+The state $\sigma$ consists of a set of constraints specified by the user. We write
+$c$ for individual constraints and $\boldsymbol{c}$ for a set of constraints. The initial
+state is an empty set:
+\[
+\begin{array}{rcl}
+\sigma &=& \{ c_1, \ldots, c_n \}\\
+\sigmaN &=& \emptyset
+\end{array}
+\]
+Unlike in the previous examples, the crucial logic of an AI assistants is implemented in the
+$\select$ operation. The operation runs the optimization algorithm to choose the best cleaning
+script for given constraints. Formally, this can be written using the $\argmax$ operator which
+finds an argument (an expression) for which the given function (scoring function) is maximized.
+The user-specified constraints can either restrict the set of possible expressions or influence
+the scoring function. More formally, we assume that:
+
+\begin{itemize}
+\item $E_{\boldsymbol{c}}\subseteq E$ is a set of expressions that respect constraints $\boldsymbol{c}$,
+\item $Q_{\boldsymbol{c}}(X, e)$ is a scoring function with respect to the constraints $\boldsymbol{c}$,
+  which returns the score of an expression $e$, i.e., how good $e$ is at cleaning the data $X$.
+\end{itemize}
+
+\noindent
+For a given set of constraints $\boldsymbol{c}$, the $\select$ operation looks
+for $e\in E_{\boldsymbol{c}}$ with the largest score:
+\[
+\select_X(\boldsymbol{c}) = \argmax_{e \in E_{\boldsymbol{c}}} Q_{\boldsymbol{c}}(X, e)
+\]
+The actual implementation of the optimization uses various machine learning techniques to
+find the optimal expression. In case of datadiff, $X$ is a pair of datasets $X_1, X_2$ to be
+reconciled. The AI assistant uses the Hungarian algorithm \cite{sutton-2018-datadiff} to construct
+a matching of columns from $X_1$ and $X_2$. The generated expression is a sequence of patches
+that can be applied to $X_2$ in order to reconcile its structure with the sturcture of $X_1$.
+The constraints specified by the user restrict the space of possible column matchings and so they
+affect $E_\boldsymbol{c}$. The scoring function $Q_\boldsymbol{c}$ is independent of
+the constraints and computes a sum of distances between the statistical distributions of the
+columns from $X_1$ and a patched version of $X_2$.
+
+The $\choices$ operation is responsible for generating possible constraints that the user may
+want to add to guide the inference. AI assistants typically offer the user options to prevent
+or adapt some aspect of the cleaning logic inferred by the system. For example, if datadiff
+matches two columns, it will offer a constraint to prevent the matching. It also generates
+constraints that let the user force a specific matching.
+
+To implement $\choices_X$, optimization-based AI assistants first call $\select_X(\sigma)$ to
+get the best expression $e$. Based on this, they generate possible constraints $c_1, c_2, \ldots$
+that the user may want to choose from. The identifiers $\iota_1,\iota_2, \ldots$ provide a
+human-readable description of the constraints. Note that this operation is specific to the particular
+AI assistant. The $\choices_X$ operation then offers a list of constraint sets where the additional
+constraint is added to the previously collected set:
+\[
+\choices_X(\boldsymbol{c}) = \{\iota_1 \mapsto \boldsymbol{c}\cup\{ c_1 \}, \iota_2\mapsto\boldsymbol{c}\cup\{ c_2 \}, \ldots\}
+\]
+The integration of an AI assistant, as described here, has to follow the external mode of embedding.
+The interaction with the assistant results in a cleaning script (expression), but there is no way
+of reconstructing the constrains used to guide the optimization. To support internal embedding, the
+$\select$ operation would need to explicitly include the constraints in the resulting expression.
+However, rerunning the $\select$ operation with the same constraints may result in a different
+cleaning script if the machine learning algorithm is probabilistic.
+
+\newpage
 
 \subsection{Interactive theorem proving}
 ~
@@ -496,6 +635,10 @@ Coq proofs are represented
 
 
 \cite{rein-2019-exploratory}
+
+\section{Limitations}
+
+hard to edit - you cannot easily go back
 
 \newpage
 
