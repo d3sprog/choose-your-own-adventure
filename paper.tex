@@ -425,10 +425,10 @@ $\op(\boldsymbol{p})$ for an operation with a vector of parameters:
 \]
 The behaviour of the $\choices$ operation depends on whether the last operation in the sequence
 expects further parameters or whether it is fully-specified. In the first case, the recommendation
-engine generates possible additional parameter values $p_', p_'', \ldots$ based on the schema $S$,
+engine generates possible additional parameter values $p', p'', \ldots$ based on the schema $S$,
 the operation $\op_n$ and the already known parameters $\boldsymbol{p_n}$.
 The $\choices$ operation then generates options that add the additional parameter. We generated the
-identifiers $\iota_',\iota_'',\ldots$ based on the state and the parameter value, such as
+identifiers $\iota',\iota'',\ldots$ based on the state and the parameter value, such as
 \ddident{by Gold descending}. Note that adding a parameter may also result in a new schema
 $S', S'', \ldots$ (which the recommendation engine computes based on the previous schema and the new parameter):
 \[
@@ -581,7 +581,7 @@ reconciled. The AI assistant uses the Hungarian algorithm \cite{sutton-2018-data
 a matching of columns from $X_1$ and $X_2$. The generated expression is a sequence of patches
 that can be applied to $X_2$ in order to reconcile its structure with the sturcture of $X_1$.
 The constraints specified by the user restrict the space of possible column matchings and so they
-affect $E_\boldsymbol{c}$. The scoring function $Q_\boldsymbol{c}$ is independent of
+affect $E_{\boldsymbol{c}}$. The scoring function $Q_{\boldsymbol{c}}$ is independent of
 the constraints and computes a sum of distances between the statistical distributions of the
 columns from $X_1$ and a patched version of $X_2$.
 
@@ -609,19 +609,99 @@ cleaning script if the machine learning algorithm is probabilistic.
 
 \newpage
 
-\subsection{Interactive theorem proving}
-~
+\subsection{Theorem proving}
 
-The internal mode can also be used when
-working with theorem provers.
+In the previous three sections, we showed how existing formally well-documented systems fit the
+choose-your-own-adventure interaction pattern. Although interactive theorem provers and editors
+for dependently typed languages implement similar kinds of interactions, there is no well-documented
+system that exactly fits the pattern. The closest example is perhaps the recently envisioned
+mixed-mode interaction theorem prover \cite{verter-2024-mixed}. Rather than reframing the
+implementation of an existing system, this section thus outlines a possible implementation.
 
-In Coq, where proofs are represented as series of tactics,
+\subparagraph{Theorem provers.}
+There are two approaches to interacting with an interactive theorem prover. In Coq, the user
+writes a sequence of tactics that transform proof goals. In Agda or Idris, the user writes a
+term, or program, of a type that represents the theorem. Interactive editors exist for both
+types of systems. For Coq, the \texttt{Company-Coq} \cite{pitclaudel-2016-companycoq,aspinall-2000-general}
+extension offers auto-completion, which recommends available tactics, hypotheses and local
+definitions, but it does not filter them based on what is valid in a given context.
+For Idris, the interactive editor \cite{brady-2015-idris} offers a range of commands that
+transform the selected term by adding a case split, a missing case or by automatically searching
+for a proof. In Idris, the system produces valid completions, but those cover only a small number
+of situations.
 
-However, this would also be case in a
-completion engine for the Coq proof system that would offer a choice of tactics to apply, because
-Coq proofs are represented
+Despite the different ways of working, an implementation of the choose-your-own-adventure
+pattern for both types of systems would be similar. Based on the sub-goal that the user is
+currently proving, the system would recommend a range of tactics that can be applied to the
+sub-goal. In the case of Coq, the selected tactic would be added to the sequence. In Idris, the
+selected tactic would be applied to transform the current term. The difference is in the mode of
+embedding. A system for Coq would provide internal embedding in that the selected option is added
+to the proof source code. (Much like selecting a completion when using type providers appends a
+member access.) A system for Idris-like language would use the tactic to transform the term,
+making it impossible to reconstruct the sequence of applied tactics as in the external mode of
+embedding.
 
-~
+\begin{figure}
+\[
+\begin{array}{lcl}
+\boxed{\Gamma \vdash \tau \Rightarrow e}\\[1em]
+\dfrac{}{\Gamma,x:\tau \vdash \tau \Rightarrow x}~\ident{(syn-var)} &\quad&
+\dfrac{}{\Gamma \vdash \tau \Rightarrow ?_\tau}~\ident{(syn-hole)}\\[2em]
+\dfrac{\Gamma,x:\tau_1\vdash \tau_2 \Rightarrow e}{\Gamma \vdash \tau_1 \rightarrow \tau_2 \Rightarrow \lambda x.e}~\ident{(syn-lambda)}&&
+\dfrac{\Gamma \vdash \tau_1\rightarrow\tau_2 \Rightarrow e_1 \quad \Gamma \vdash \tau_1 \Rightarrow e_2}{\Gamma \vdash \tau_2 \Rightarrow e_1~e_2}~\ident{(syn-app)}\\[2em]
+\dfrac{b\in \{\ident{true},\ident{false}\} }{\Gamma \vdash \ident{bool} \Rightarrow b}~\ident{(syn-bool)} &\quad&
+\dfrac{\Gamma \vdash \tau \Rightarrow e_1 \quad \Gamma \vdash \tau \Rightarrow e_2 \quad \Gamma \vdash \ident{bool} \Rightarrow e}{\Gamma \vdash \tau \Rightarrow \ident{if}~e~\ident{then}~e_1~\ident{else}~e_2}~\ident{(syn-cond)}\\
+\end{array}
+\]
+\caption{Illustrative set of simple type-directed program synthesis rules}
+\label{fig:synths}
+\end{figure}
+
+\subparagraph{Type-directed synthesis.}
+Thanks to the equivalence between programs and proofs, techniques akin to tactic-based proof
+construction have also emerged in work on type-directed program synthesis \cite{knoth-2023-synthesis}.
+As illustrated in Figure~\ref{fig:synths}, the synthesis process can be described as a set of
+rules of the form $\Gamma \vdash \tau \Rightarrow e$ that describe ways of synthesizing
+expressions $e$ of a type $\tau$. Existing implementations of the mechanism typically aim to
+automate program synthesis and use more precise type information, such as refinement types
+\cite{polikarpova-2016-synthesis} and graded types \cite{hughes-2024-synthesis}, or include
+examples \cite{osera-2015-synthesis}. However, the same rules could be used to guide an
+interactive choose-your-own-adventure system. If the interaction was invoked to fill a typed
+hole $?_\tau$ in a context $\Gamma$, the system could collect multiple $e$ such that
+$\Gamma \vdash \tau \Rightarrow e$ and offer a choice of such options. Note that the definition
+in Figure~\ref{fig:synths} synthesizes sub-expressions recursively, but a choose-your-own-adventure
+system may always fill those with a typed hole using (\ident{syn-hole}).
+
+\subparagraph{Formal model.}
+From the perspective of user interaction, a proof assistant where a user interactively constructs
+a term of a given type is very similar to an interactive tool for type-directed program synthesis.
+The key difference being that theorem provers like Idris and Agda use rich dependent type theories.
+
+For example, consider a system akin to Idris where the user aims to construct a term $e$ of type
+$\tau$. The term may contain typed holes written as $?_\tau$ and a relation $\Gamma\vdash \tau\Rightarrow e$
+provides ways of synthesizing terms of type $\tau$. We again write $E[?_\tau]$ for a
+completion context containing a (typed) hole; we assume that the variables $\Gamma$ available in
+the completion context of the hole can be obtained using $\ident{vars}(E[\_])$.
+
+To model a choose-your-own-adventure interaction akin to Idris, the state of the system
+would be the term $e$ itself, initially a typed hole. The $\choices$ operation synthesizes
+possible completions using $\Rightarrow$ (restricted, e.g., to only generate terms of a certain
+maximum size) and offers the resulting terms as possible completions. The identifiers $\iota$
+could be based either on the tactic name (rule name) or show a preview of the resulting term.
+The $\choices$ operation suggests ways to fill a hole in the term:
+\[
+\begin{array}{rcl}
+\choices(E[?_\tau]) &=& \{\; \iota \mapsto e ~|~ \forall e\;.\; \ident{vars}(E[\_]) \vdash \tau \Rightarrow e_i \}\\
+\select(e) &=& e
+\end{array}
+\]
+The $\choices$ operation synthesizes possible terms of a type required by the hole. Since the
+state $\sigma$ is a term, the $\select$ operation simply returns it. The definition models the
+external embedding of the interaction, i.e., a system that behaves according to Idris. It
+constructs the term, but does not record the completion choices. That said, a system akin to Coq
+that constructs a sequence of tactics could be modelled too if the state was a sequence of
+tactics and $\choices$ appended the available tactics as options to the end of the current sequence.
+
 
 \newpage
 
@@ -633,8 +713,12 @@ Coq proofs are represented
 \section{Applications}
 \label{sec:applications}
 
+ways of integrating automation with manual interaction
+- confirm each step vs. auto and retrace
 
 \cite{rein-2019-exploratory}
+
+\cite{verter-2024-mixed}
 
 \section{Limitations}
 
