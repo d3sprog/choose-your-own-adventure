@@ -388,6 +388,7 @@ one notable way. We then discuss type providers more generally and show how to c
 The Gamma. We then revisit the remaining two examples.
 
 \subsection{Data exploration}
+\label{sec:examples-data}
 
 In The Gamma, the choose-your-own-adventure interaction pattern is used to construct a
 query that transforms the given input data. The query is a sequence of operations with parameters,
@@ -462,6 +463,8 @@ definition shows, this underlying engine can be easily exposed through the commo
 choose-your-own-adventure interface.
 
 \subsection{Type providers}
+\label{sec:examples-tps}
+
 The type provider mechanism in F\# operates at the level of the type system. It is not a merely an
 editor feature. A type provider for a data source, such as the World Development Indicators database,
 generates a collection of types that model the external data source. In F\#, the types are classes
@@ -507,7 +510,7 @@ member chain:
 \end{array}
 \]\vspace{-0.5em}
 \[
-\select_\mathbb{C}(e . \iota_1 . \lbrack\ldots\rbrack . \iota_n, C) = e . \iota_1 . \ldots . \iota_n
+\select_\mathbb{C}(e . \iota_1 . \lbrack\ldots\rbrack . \iota_n, C) = e . \iota_1 . \lbrack\ldots\rbrack . \iota_n
 \]
 The model does not directly refer to type providers. Those are responsible solely for generating
 the type definitions in $\mathbb{C}$ as documented in earlier work \cite{petricek-2016-fsdata}.
@@ -531,6 +534,8 @@ types behind the scenes. We return to the differences between the two models in
 Section~\ref{sec:properties}.
 
 \subsection{AI assistants}
+\label{sec:examples-aias}
+
 AI assistants guide the analyst through a data wrangling task. They
 generate a data cleaning script, taking into account constraints selected by the user.
 Most AI assistants obtain the script by performing statistical optimization with respect
@@ -610,6 +615,7 @@ cleaning script if the machine learning algorithm is probabilistic.
 \newpage
 
 \subsection{Theorem proving}
+\label{sec:examples-thm}
 
 In the previous three sections, we showed how existing formally well-documented systems fit the
 choose-your-own-adventure interaction pattern. Although interactive theorem provers and editors
@@ -708,7 +714,178 @@ tactics and $\choices$ appended the available tactics as options to the end of t
 \section{Properties}
 \label{sec:properties}
 
-~
+The choose-your-own-adventure calculus lets us precisely discuss differences between how different
+programming systems interact with the user. We saw this in Section~\ref{sec:calculus}, which
+defines internal and external mode of embedding to distinguish between systems where the
+interaction leaves a reconstructible trace in the constructed program and systems where it does not.
+In this section, we make precise two properties that were introduced informally in the context of
+data exploration in The Gamma \cite{petricek-2022-thegamma}.
+
+The choose-your-own-adventure system for data exploration in The Gamma is \emph{correct}, which means that
+all programs that a user can construct using the system, by repeatedly choosing from the
+auto-completion list, are well-typed. The system is also \emph{complete}, meaning that the user can
+use auto-completion to construct all possible programs. That is, there are no well-typed programs
+that cannot be constructed interactively, by repeatedly choosing options from the offered list of
+choices.
+
+\subparagraph{Correctness.}
+The notions of correctness and completeness can, in general, be defined for any
+choose-your-own-adventure systems with respect to some system-specific distinction between
+correct and incorrect expressions. We write $\mathcal{E} \subseteq E$ for the subset
+of correct expressions.
+
+For some systems, the set of correct expressions $\mathcal{E}$
+is a set of all well-typed expressions. For some systems, we may additionally want the set
+of correct expressions $\mathcal{E}$ to be hole-free, i.e., only programs that can run (or
+complete proofs) are correct. For systems where the completion is string-based, we may treat
+all syntactically-correct programs as correct.
+
+
+\begin{definition}[Correctness]
+Assume that $\mathcal{E}\subseteq E$ is a subset of correct expressions,
+a choose-your-own-adventure system is correct with respect to $\mathcal{E}$ if:
+\begin{itemize}
+\item $\forall \sigma_1,..,\sigma_n$ and $\iota_i,..,\iota_n$ such that
+  $\iota_i\mapsto\sigma_i \in \choices(\sigma_{i-1})$ it is the case
+that $\select(\sigma_i) \in \mathcal{E}$.
+\end{itemize}
+\end{definition}
+
+The definition states that, if we make any sequence of choices that start from an initial state
+$\sigma_0$ and result in intermediate states $\sigma_1, \sigma_2, \ldots$, then the programs
+we could generate from any of the intermediate states are correct.
+
+The property depends on what we choose as the subset of correct expressions
+$\mathcal{E}$. Trivially, all systems are correct with respect to $\mathcal{E}=E$.
+However, the systems discussed in Section~\ref{sec:examples} are all correct with respect
+to non-trivial choices:
+
+\begin{itemize}
+\setlength{\itemsep}{5pt}
+\item For the data exploration system discussed in Section~\ref{sec:examples-data}, we say that
+  correct expressions are those where the parameters of all operations are fully-specified.
+  That is, no operation requires further arguments. With respect to this definition,
+  the system is correct. However, this is the case because the $\select$ operation drops the last
+  operation if it is not fully-specified. If $\select$ returned all operations, including the
+  partially constructed (but not yet completed) one, the system would not be correct.
+
+\item For type providers (Section~\ref{sec:examples-tps}), correct expressions are those that
+  are well-typed. With respect to this definition, the system is correct because the $\choices$
+  operation offers available members based on the type information. This also holds for the
+  type provider behind The Gamma. In The Gamma, the generated members collect operation parameters
+  and only invoke the operation once all parameters are known.
+
+\item In the case of AI assistants (Section~\ref{sec:examples-aias}) the correctness of the system
+  depends on the expressions returned by the optimization algorithm ($\argmax$) from the
+  set of all possible cleaning scripts $E_{\boldsymbol{c}}$. In general, the algorithm can return
+  any $e\in E_{\boldsymbol{c}}$ and so system correctness is a matter of definition. The system
+  is correct if and only if $E_{\boldsymbol{c}}\subseteq\mathcal{E}$ for all possible sets of
+  constraints $\boldsymbol{c}$. In practice, it is more important that the constraints generated
+  by $\choices$ are well-formed.
+
+\item For the interactive system based on type-directed synthesis (Section~\ref{sec:examples-thm}),
+  correct expressions are those that are well-typed. The system is correct if the synthesis rules
+  are sound~\cite{osera-2015-synthesis}, that is if $\Gamma \vdash \tau \Rightarrow e$ then also
+  $\Gamma \vdash e : \tau$. Note that a correct choose-your-own-adventure system can be defined
+  even using unsound synthesis rules -- it would be sufficient to filter the recommended
+  expressions in $\choices$ to the ones that are well-typed.
+\end{itemize}
+
+There may be useeful systems that violate the correctness property. An tool based on a large
+language model (LLM) may, for example, generate code with errors that the programmer can then
+correct. A more interesting case are cases like the data exploration systems discussed above
+where the program only becomes correct after multiple subsequent choices are made, for example
+to fully specify arguments of an operation.
+
+\subparagraph{Eventual correctness.}
+The data exploration system discussed in Section~\ref{sec:examples-data} ensures correctness
+by dropping the last, not fully-specified, operation in the $\select$ operation. As a result,
+it does not support internal embedding. If the operation is dropped, we cannot reconstruct it
+from the generated source code. Generating code that includes the not-fully-specified operation
+allows external embedding, but makes the system incorrect. It would still satisfy a weaker
+definition of (eventual) correctness:
+
+\begin{definition}[Eventual correctness]\label{def:eventual}
+Assume that $\mathcal{E}\subseteq E$ is a subset of correct expressions,
+a choose-your-own-adventure system is eventually correct with respect to $\mathcal{E}$ if:
+\begin{itemize}
+\item For any sequence $\sigma_1,\ldots,\sigma_k$ and $\iota_1,\ldots,\iota_k$ such that
+  $\forall i\!\in\! 1\ldots k\;.\; \iota_i\mapsto\sigma_i \in \choices(\sigma_{i-1})$
+  there exists an extension $\sigma_{k+1},\ldots,\sigma_n$ and $\iota_{k+1},\ldots,\iota_n$ such that
+  $\select(\sigma_n) \in \mathcal{E}$ and
+  $\forall i\!\in\! k\!+\!1\ldots n\;.\;\iota_i\mapsto\sigma_i \in \choices(\sigma_{i-1})$.
+\end{itemize}
+\end{definition}
+
+Eventual correctness models systems where some sequences of choices result in invalid programs,
+but it is always possible to make further choices to reach a valid program. In general, it is
+always possible to turn an eventually correct system into a correct one:
+
+\begin{enumerate}
+\setlength{\itemsep}{5pt}
+\item As in the case of the data exploration, the system can remember the last state for which
+  the $\select$ operation returned a correct program and use it until the next correct state is
+  reached. This makes any eventually correct choose-your-own-adventure system correct, but it
+  does not support internal embedding.
+
+\item Alternatively, we can construct a system that collapses all sequence of temporarilly invalid states
+  $\sigma_1, \ldots, \sigma_n$ identified by $\iota_1, \ldots, \sigma_n$ where
+  $\forall i\!\in\! 1\ldots n\!-\! 1\;.\;\select(\sigma_i)\notin\mathcal{E}$ and $\select(\sigma_n)\in\mathcal{E}$
+  into a single option $\iota_1\ldots\iota_n \mapsto \sigma_n$  designated by a joined identifier.
+  This makes the system correct and also preserves external embedding, but it potentially
+  generates too many choices that are difficult to understand.
+\end{enumerate}
+
+There is more to be said about correctness of interactive programming systems, but the
+conceptual framework provided by the choose-your-own-adventure calculus makes it possible to
+take the first step. Similarly, the model lets us formally define the second property
+mentioned earlier.
+
+\subparagraph{Completeness.}
+
+todo
+
+
+..
+
+..
+
+..
+
+\begin{definition}[Completeness]
+Assume that $E$ is a set of all possible expressions in a language
+and $\mathcal{E}\subseteq E$ is a set of all expressions that are correct with respect to some
+case-specific notion of correctness (e.g. well-typed). A choose-your-own-adventure system is
+complete if:
+
+$\forall e\in \mathcal{E}.~\exists \sigma_1,\ldots,\sigma_n$ such that
+$\sigma_i \in \choices(\sigma_{i-1})$ and $e=\select(\sigma_n)$.
+\end{definition}
+
+That is, for any correct program, there is a sequence of choices that leads to a system state
+that $\select$ turns into the given program. This is a more subtle property that not all of my
+above examples have:
+
+* In The Gamma, the programs that can be generated are restricted - you can only use a fixed set
+  of aggregation operations (rather than writing your own) and only a restricted set of parameters
+  (sorting by a key, but not based on a custom expression). For those, the type provider is
+  complete. However, if we treated a more general-purpose query language as the underlying
+  language, the provider would not be complete.
+
+* In AI assistants, the system offers a set of constraints that is generated based on the selected
+  expression, but this does not let you construct arbitrary constraints. Moreover, because the
+  $\select$ operation is AI-based, it is not guaranteed that there is a way to get it to generate
+  a specific program (unless we can supply constraints that restrict the set of programs $E_\boldsymbol{c}$
+  to just a single program).
+
+* In interactive theorem prover, we could possibly offer all possible ways of filling a hole
+  (up to renaming), but this would not be very practical. It is more likely that
+  tactics will only generate a subset of valid proof/program steps and the user has to write some
+  other steps manually.
+
+The nice thing about the choose-your-own-adventure formalism is that it also lets us talk about
+(and think about!) properties that are more specifically about the user interaction with an
+interactive programming system.
 
 \section{Applications}
 \label{sec:applications}
@@ -727,270 +904,5 @@ hard to edit - you cannot easily go back
 \newpage
 
 \bibliography{paper}
-
-\newpage
-
-\section{Typesetting instructions -- Summary}
-\label{sec:typesetting-summary}
-
-LIPIcs is a series of open access high-quality conference proceedings across all fields in informatics established in cooperation with Schloss Dagstuhl.
-In order to do justice to the high scientific quality of the conferences that publish their proceedings in the LIPIcs series, which is ensured by the thorough review process of the respective events, we believe that LIPIcs proceedings must have an attractive and consistent layout matching the standard of the series.
-Moreover, the quality of the metadata, the typesetting and the layout must also meet the requirements of other external parties such as indexing service, DOI registry, funding agencies, among others. The guidelines contained in this document serve as the baseline for the authors, editors, and the publisher to create documents that meet as many different requirements as possible.
-
-Please comply with the following instructions when preparing your article for a LIPIcs proceedings volume.
-\paragraph*{Minimum requirements}
-
-\begin{itemize}
-\item Use pdflatex and an up-to-date \LaTeX{} system.
-\item Use further \LaTeX{} packages and custom made macros carefully and only if required.
-\item Use the provided sectioning macros: \verb+\section+, \verb+\subsection+, \verb+\subsubsection+, \linebreak \verb+\paragraph+, \verb+\paragraph*+, and \verb+\subparagraph*+.
-\item Provide suitable graphics of at least 300dpi (preferably in PDF format).
-\item Use BibTeX and keep the standard style (\verb+plainurl+) for the bibliography.
-\item Please try to keep the warnings log as small as possible. Avoid overfull \verb+\hboxes+ and any kind of warnings/errors with the referenced BibTeX entries.
-\item Use a spellchecker to correct typos.
-\end{itemize}
-
-\paragraph*{Mandatory metadata macros}
-Please set the values of the metadata macros carefully since the information parsed from these macros will be passed to publication servers, catalogues and search engines.
-Avoid placing macros inside the metadata macros. The following metadata macros/environments are mandatory:
-\begin{itemize}
-\item \verb+\title+ and, in case of long titles, \verb+\titlerunning+.
-\item \verb+\author+, one for each author, even if two or more authors have the same affiliation.
-\item \verb+\authorrunning+ and \verb+\Copyright+ (concatenated author names)\\
-The \verb+\author+ macros and the \verb+\Copyright+ macro should contain full author names (especially with regard to the first name), while \verb+\authorrunning+ should contain abbreviated first names.
-\item \verb+\ccsdesc+ (ACM classification, see \url{https://www.acm.org/publications/class-2012}).
-\item \verb+\keywords+ (a comma-separated list of keywords).
-\item \verb+\relatedversion+ (if there is a related version, typically the ``full version''); please make sure to provide a persistent URL, e.\,g., at arXiv.
-\item \verb+\begin{abstract}...\end{abstract}+ .
-\end{itemize}
-
-\paragraph*{Please do not \ldots} %Do not override the \texttt{\seriesstyle}-defaults}
-Generally speaking, please do not override the \texttt{lipics-v2021}-style defaults. To be more specific, a short checklist also used by Dagstuhl Publishing during the final typesetting is given below.
-In case of \textbf{non-compliance} with these rules Dagstuhl Publishing will remove the corresponding parts of \LaTeX{} code and \textbf{replace it with the \texttt{lipics-v2021} defaults}. In serious cases, we may reject the LaTeX-source and expect the corresponding author to revise the relevant parts.
-\begin{itemize}
-\item Do not use a different main font. (For example, the \texttt{times} package is forbidden.)
-\item Do not alter the spacing of the \texttt{lipics-v2021.cls} style file.
-\item Do not use \verb+enumitem+ and \verb+paralist+. (The \texttt{enumerate} package is preloaded, so you can use
- \verb+\begin{enumerate}[(a)]+ or the like.)
-\item Do not use ``self-made'' sectioning commands (e.\,g., \verb+\noindent{\bf My+ \verb+Paragraph}+).
-\item Do not hide large text blocks using comments or \verb+\iffalse+ $\ldots$ \verb+\fi+ constructions.
-\item Do not use conditional structures to include/exclude content. Instead, please provide only the content that should be published -- in one file -- and nothing else.
-\item Do not wrap figures and tables with text. In particular, the package \texttt{wrapfig} is not supported.
-\item Do not change the bibliography style. In particular, do not use author-year citations. (The
-\texttt{natbib} package is not supported.)
-\end{itemize}
-
-\enlargethispage{\baselineskip}
-
-This is only a summary containing the most relevant details. Please read the complete document ``LIPIcs: Instructions for Authors and the \texttt{lipics-v2021} Class'' for all details and don't hesitate to contact Dagstuhl Publishing (\url{mailto:publishing@dagstuhl.de}) in case of questions or comments:
-\href{http://drops.dagstuhl.de/styles/lipics-v2021/lipics-v2021-authors/lipics-v2021-authors-guidelines.pdf}{\texttt{http://drops.dagstuhl.de/styles/lipics-v2021/\newline lipics-v2021-authors/lipics-v2021-authors-guidelines.pdf}}
-
-\section{Lorem ipsum dolor sit amet}
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit \cite{DBLP:journals/cacm/Knuth74}. Praesent convallis orci arcu, eu mollis dolor. Aliquam eleifend suscipit lacinia. Maecenas quam mi, porta ut lacinia sed, convallis ac dui. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse potenti. Donec eget odio et magna ullamcorper vehicula ut vitae libero. Maecenas lectus nulla, auctor nec varius ac, ultricies et turpis. Pellentesque id ante erat. In hac habitasse platea dictumst. Curabitur a scelerisque odio. Pellentesque elit risus, posuere quis elementum at, pellentesque ut diam. Quisque aliquam libero id mi imperdiet quis convallis turpis eleifend.
-
-\begin{lemma}[Lorem ipsum]
-\label{lemma:lorem}
-Vestibulum sodales dolor et dui cursus iaculis. Nullam ullamcorper purus vel turpis lobortis eu tempus lorem semper. Proin facilisis gravida rutrum. Etiam sed sollicitudin lorem. Proin pellentesque risus at elit hendrerit pharetra. Integer at turpis varius libero rhoncus fermentum vitae vitae metus.
-\end{lemma}
-
-\begin{proof}
-Cras purus lorem, pulvinar et fermentum sagittis, suscipit quis magna.
-
-
-\proofsubparagraph*{Just some paragraph within the proof.}
-Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
-\begin{claim}
-content...
-\end{claim}
-\begin{claimproof}
-content...
-    \begin{enumerate}
-        \item abc abc abc \claimqedhere{}
-    \end{enumerate}
-\end{claimproof}
-
-\end{proof}
-
-\begin{corollary}[Curabitur pulvinar, \cite{DBLP:books/mk/GrayR93}]
-\label{lemma:curabitur}
-Nam liber tempor cum soluta nobis eleifend option congue nihil imperdiet doming id quod mazim placerat facer possim assum. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
-\end{corollary}
-
-\begin{proposition}\label{prop1}
-This is a proposition
-\end{proposition}
-
-\autoref{prop1} and \cref{prop1} \ldots
-
-\subsection{Curabitur dictum felis id sapien}
-
-Curabitur dictum \cref{lemma:curabitur} felis id sapien \autoref{lemma:curabitur} mollis ut venenatis tortor feugiat. Curabitur sed velit diam. Integer aliquam, nunc ac egestas lacinia, nibh est vehicula nibh, ac auctor velit tellus non arcu. Vestibulum lacinia ipsum vitae nisi ultrices eget gravida turpis laoreet. Duis rutrum dapibus ornare. Nulla vehicula vulputate iaculis. Proin a consequat neque. Donec ut rutrum urna. Morbi scelerisque turpis sed elit sagittis eu scelerisque quam condimentum. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Aenean nec faucibus leo. Cras ut nisl odio, non tincidunt lorem. Integer purus ligula, venenatis et convallis lacinia, scelerisque at erat. Fusce risus libero, convallis at fermentum in, dignissim sed sem. Ut dapibus orci vitae nisl viverra nec adipiscing tortor condimentum \cite{DBLP:journals/cacm/Dijkstra68a}. Donec non suscipit lorem. Nam sit amet enim vitae nisl accumsan pretium.
-
-\begin{lstlisting}[caption={Useless code.},label=list:8-6,captionpos=t,float,abovecaptionskip=-\medskipamount]
-for i:=maxint to 0 do
-begin
-    j:=square(root(i));
-end;
-\end{lstlisting}
-
-\subsection{Proin ac fermentum augue}
-
-Proin ac fermentum augue. Nullam bibendum enim sollicitudin tellus egestas lacinia euismod orci mollis. Nulla facilisi. Vivamus volutpat venenatis sapien, vitae feugiat arcu fringilla ac. Mauris sapien tortor, sagittis eget auctor at, vulputate pharetra magna. Sed congue, dui nec vulputate convallis, sem nunc adipiscing dui, vel venenatis mauris sem in dui. Praesent a pretium quam. Mauris non mauris sit amet eros rutrum aliquam id ut sapien. Nulla aliquet fringilla sagittis. Pellentesque eu metus posuere nunc tincidunt dignissim in tempor dolor. Nulla cursus aliquet enim. Cras sapien risus, accumsan eu cursus ut, commodo vel velit. Praesent aliquet consectetur ligula, vitae iaculis ligula interdum vel. Integer faucibus faucibus felis.
-
-\begin{itemize}
-\item Ut vitae diam augue.
-\item Integer lacus ante, pellentesque sed sollicitudin et, pulvinar adipiscing sem.
-\item Maecenas facilisis, leo quis tincidunt egestas, magna ipsum condimentum orci, vitae facilisis nibh turpis et elit.
-\end{itemize}
-
-\begin{remark}
-content...
-\end{remark}
-
-\section{Pellentesque quis tortor}
-
-Nec urna malesuada sollicitudin. Nulla facilisi. Vivamus aliquam tempus ligula eget ornare. Praesent eget magna ut turpis mattis cursus. Aliquam vel condimentum orci. Nunc congue, libero in gravida convallis \cite{DBLP:conf/focs/HopcroftPV75}, orci nibh sodales quam, id egestas felis mi nec nisi. Suspendisse tincidunt, est ac vestibulum posuere, justo odio bibendum urna, rutrum bibendum dolor sem nec tellus.
-
-\begin{lemma} [Quisque blandit tempus nunc]
-Sed interdum nisl pretium non. Mauris sodales consequat risus vel consectetur. Aliquam erat volutpat. Nunc sed sapien ligula. Proin faucibus sapien luctus nisl feugiat convallis faucibus elit cursus. Nunc vestibulum nunc ac massa pretium pharetra. Nulla facilisis turpis id augue venenatis blandit. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.
-\end{lemma}
-
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-
-\section{Morbi eros magna}
-
-Morbi eros magna, vestibulum non posuere non, porta eu quam. Maecenas vitae orci risus, eget imperdiet mauris. Donec massa mauris, pellentesque vel lobortis eu, molestie ac turpis. Sed condimentum convallis dolor, a dignissim est ultrices eu. Donec consectetur volutpat eros, et ornare dui ultricies id. Vivamus eu augue eget dolor euismod ultrices et sit amet nisi. Vivamus malesuada leo ac leo ullamcorper tempor. Donec justo mi, tempor vitae aliquet non, faucibus eu lacus. Donec dictum gravida neque, non porta turpis imperdiet eget. Curabitur quis euismod ligula.
-
-
-%%
-%% Bibliography
-%%
-
-%% Please use bibtex,
-
-\bibliography{lipics-v2021-sample-article}
-
-\appendix
-
-\section{Styles of lists, enumerations, and descriptions}\label{sec:itemStyles}
-
-List of different predefined enumeration styles:
-
-\begin{itemize}
-\item \verb|\begin{itemize}...\end{itemize}|
-\item \dots
-\item \dots
-%\item \dots
-\end{itemize}
-
-\begin{enumerate}
-\item \verb|\begin{enumerate}...\end{enumerate}|
-\item \dots
-\item \dots
-%\item \dots
-\end{enumerate}
-
-\begin{alphaenumerate}
-\item \verb|\begin{alphaenumerate}...\end{alphaenumerate}|
-\item \dots
-\item \dots
-%\item \dots
-\end{alphaenumerate}
-
-\begin{romanenumerate}
-\item \verb|\begin{romanenumerate}...\end{romanenumerate}|
-\item \dots
-\item \dots
-%\item \dots
-\end{romanenumerate}
-
-\begin{bracketenumerate}
-\item \verb|\begin{bracketenumerate}...\end{bracketenumerate}|
-\item \dots
-\item \dots
-%\item \dots
-\end{bracketenumerate}
-
-\begin{description}
-\item[Description 1] \verb|\begin{description} \item[Description 1]  ...\end{description}|
-\item[Description 2] Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\item[Description 3]  \dots
-%\item \dots
-\end{description}
-
-\cref{testenv-proposition} and \autoref{testenv-proposition} ...
-
-\section{Theorem-like environments}\label{sec:theorem-environments}
-
-List of different predefined enumeration styles:
-
-\begin{theorem}\label{testenv-theorem}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{theorem}
-
-\begin{lemma}\label{testenv-lemma}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{lemma}
-
-\begin{corollary}\label{testenv-corollary}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{corollary}
-
-\begin{proposition}\label{testenv-proposition}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{proposition}
-
-\begin{conjecture}\label{testenv-conjecture}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{conjecture}
-
-\begin{observation}\label{testenv-observation}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{observation}
-
-\begin{exercise}\label{testenv-exercise}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{exercise}
-
-\begin{definition}\label{testenv-definition}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{definition}
-
-\begin{example}\label{testenv-example}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{example}
-
-\begin{note}\label{testenv-note}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{note}
-
-\begin{note*}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{note*}
-
-\begin{remark}\label{testenv-remark}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{remark}
-
-\begin{remark*}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{remark*}
-
-\begin{claim}\label{testenv-claim}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{claim}
-
-\begin{claim*}\label{testenv-claim2}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{claim*}
-
-\begin{proof}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{proof}
-
-\begin{claimproof}
-Fusce eu leo nisi. Cras eget orci neque, eleifend dapibus felis. Duis et leo dui. Nam vulputate, velit et laoreet porttitor, quam arcu facilisis dui, sed malesuada risus massa sit amet neque.
-\end{claimproof}
 
 \end{document}
