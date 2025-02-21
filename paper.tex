@@ -2,9 +2,11 @@
 \hideLIPIcs
 
 \newcommand{\ident}[1]{\textsf{#1}}
+\newcommand{\kvd}[1]{\textsf{\bfseries #1}}
 \newcommand{\ddident}[1]{\guillemotleft\ident{#1}\guillemotright}
 \newcommand{\sigmaN}{\sigma_0}
 \newcommand{\select}{\textnormal{\ident{choose}}}
+\newcommand{\suggest}{\textnormal{\ident{suggest}}}
 \newcommand{\choices}{\textnormal{\ident{choices}}}
 \newcommand{\op}{\textit{op}}
 \newcommand{\vect}[1]{\lbrack #1 \rbrack}
@@ -42,7 +44,8 @@ use a simple formal mathematical model
 that we call \emph{the choose-your-own-adventure calculus} to
 
 
-todo
+TODO: Say somewhere that this also formalizes things like mixed-initiative interaction and
+programming by demonstration
 
 % and enable a transfer of ideas between them
 
@@ -285,7 +288,7 @@ branches of a given node.
 Given expressions $e\in \mathbb{E}$ and states $\sigma \in \Sigma$, a choose-your-own-adventure
 system is a pair of operations \choices, \select\ such that:
 
-\vspace{-0.25em}
+\vspace{-0.5em}
 \raggedright
 \begin{itemize}
   \item $\choices(\sigma) = \{\iota_1\mapsto\sigma_1, \ldots, \iota_n\mapsto\sigma_n\}$ is
@@ -323,11 +326,11 @@ $\ident{init}(E[?])=\sigmaN$.
 An expression $E[?]$ is completed as $E[e]$ via external embedding of an interaction with
 a choose-your-own-adventure system consisting of \choices\ and \select\ if:
 
-\vspace{-0.25em}
+\vspace{-0.5em}
 \raggedright
 \begin{enumerate}
 \item $\ident{init}(E[?]) = \sigmaN$ obtains the initial state of a choose-your-own-interaction system,
-\item $\sigma_n$ is a system state such that $\forall i\in{1\ldots n}.(\iota_i\mapsto\sigma_i)\in\choices{(\sigma_{n-1})}$,
+\item $\sigma_n$ is a system state such that $\forall i\!\in\! 1\ldots n\;.\;(\iota_i\mapsto\sigma_i)\in\choices{(\sigma_{n-1})}$,
   i.e.,~the user\\ makes a series of choices resulting in a final state of the system $\sigma_n$,
 \item $E[e]$ where $e=\select(\sigma_n)$, i.e.,~the final program is constructed by replacing the hole
   in the completion context with the expression $e$ generated from $\sigma_n$.
@@ -356,7 +359,7 @@ An internal embedding is the same as external embedding with an additional const
 An expression $E[?]$ is completed as $E[e]$ via internal embedding of an interaction with
 a choose-your-own-adventure system consisting of \choices\ and \select\ if:
 
-\vspace{-0.25em}
+\vspace{-0.5em}
 \raggedright
 \begin{enumerate}
 \item $E[?]$ is completed as $E[e]$ via external embedding using \ident{init}, \choices\ and \select\\
@@ -714,36 +717,36 @@ tactics and $\choices$ appended the available tactics as options to the end of t
 \section{Properties}
 \label{sec:properties}
 
-The choose-your-own-adventure calculus lets us precisely discuss differences between how different
+The choose-your-own-adventure calculus lets us precisely compare how how different
 programming systems interact with the user. We saw this in Section~\ref{sec:calculus}, which
 defines internal and external mode of embedding to distinguish between systems where the
 interaction leaves a reconstructible trace in the constructed program and systems where it does not.
 In this section, we make precise two properties that were introduced informally in the context of
 data exploration in The Gamma \cite{petricek-2022-thegamma}.
 
-The choose-your-own-adventure system for data exploration in The Gamma is \emph{correct}, which means that
+The choose-your-own-adventure system for data exploration in The Gamma is \emph{correct}, meaning that
 all programs that a user can construct using the system, by repeatedly choosing from the
 auto-completion list, are well-typed. The system is also \emph{complete}, meaning that the user can
-use auto-completion to construct all possible programs. That is, there are no well-typed programs
+use auto-completion to construct all possible programs. In other words, there are no well-typed programs
 that cannot be constructed interactively, by repeatedly choosing options from the offered list of
 choices.
 
 \subparagraph{Correctness.}
-The notions of correctness and completeness can, in general, be defined for any
+The notions of correctness and completeness can be defined for any
 choose-your-own-adventure systems with respect to some system-specific distinction between
 correct and incorrect expressions. We write $\mathcal{E} \subseteq E$ for the subset
 of correct expressions.
 
-For some systems, the set of correct expressions $\mathcal{E}$
+For systems based on statically-typed programming languages, a reasonable choice of $\mathcal{E}$
 is a set of all well-typed expressions. For some systems, we may additionally want the set
 of correct expressions $\mathcal{E}$ to be hole-free, i.e., only programs that can run (or
-complete proofs) are correct. For systems where the completion is string-based, we may treat
-all syntactically-correct programs as correct.
+represent complete proofs) are correct. For systems where the completion is string-based,
+we may treat all syntactically-correct programs as correct.
 
 
 \begin{definition}[Correctness]
-Assume that $\mathcal{E}\subseteq E$ is a subset of correct expressions,
-a choose-your-own-adventure system is correct with respect to $\mathcal{E}$ if:
+Assume that $\mathcal{E}\subseteq E$ is a subset of correct expressions.
+A~choose-your-own-adventure system is correct with respect to $\mathcal{E}$ if and only if:
 \begin{itemize}
 \item $\forall \sigma_1,..,\sigma_n$ and $\iota_i,..,\iota_n$ such that
   $\iota_i\mapsto\sigma_i \in \choices(\sigma_{i-1})$ it is the case
@@ -752,31 +755,31 @@ that $\select(\sigma_i) \in \mathcal{E}$.
 \end{definition}
 
 The definition states that, if we make any sequence of choices that start from an initial state
-$\sigma_0$ and result in intermediate states $\sigma_1, \sigma_2, \ldots$, then the programs
+$\sigma_0$ and result in intermediate states $\sigma_1, \ldots, \sigma_n$ then the programs
 we could generate from any of the intermediate states are correct.
 
 The property depends on what we choose as the subset of correct expressions
 $\mathcal{E}$. Trivially, all systems are correct with respect to $\mathcal{E}=E$.
-However, the systems discussed in Section~\ref{sec:examples} are all correct with respect
-to non-trivial choices:
+However, the systems discussed in Section~\ref{sec:examples} are, with one exception,
+correct with respect to a non-trivial set of correct expressions:
 
 \begin{itemize}
 \setlength{\itemsep}{5pt}
 \item For the data exploration system discussed in Section~\ref{sec:examples-data}, we say that
   correct expressions are those where the parameters of all operations are fully-specified.
   That is, no operation requires further arguments. With respect to this definition,
-  the system is correct. However, this is the case because the $\select$ operation drops the last
+  the system is correct. However, this is the case only because the $\select$ operation drops the last
   operation if it is not fully-specified. If $\select$ returned all operations, including the
-  partially constructed (but not yet completed) one, the system would not be correct.
+  partially constructed (but not yet completed) operation, the system would not be correct.
 
 \item For type providers (Section~\ref{sec:examples-tps}), correct expressions are those that
   are well-typed. With respect to this definition, the system is correct because the $\choices$
-  operation offers available members based on the type information. This also holds for the
+  operation offers available members based on the type information. This reasoning also applies to the
   type provider behind The Gamma. In The Gamma, the generated members collect operation parameters
   and only invoke the operation once all parameters are known.
 
 \item In the case of AI assistants (Section~\ref{sec:examples-aias}) the correctness of the system
-  depends on the expressions returned by the optimization algorithm ($\argmax$) from the
+  depends on the expressions returned by the optimization algorithm ($\mathit{arg\,max}$) from the
   set of all possible cleaning scripts $E_{\boldsymbol{c}}$. In general, the algorithm can return
   any $e\in E_{\boldsymbol{c}}$ and so system correctness is a matter of definition. The system
   is correct if and only if $E_{\boldsymbol{c}}\subseteq\mathcal{E}$ for all possible sets of
@@ -792,18 +795,18 @@ to non-trivial choices:
 \end{itemize}
 
 There may be useeful systems that violate the correctness property. An tool based on a large
-language model (LLM) may, for example, generate code with errors that the programmer can then
-correct. A more interesting case are cases like the data exploration systems discussed above
-where the program only becomes correct after multiple subsequent choices are made, for example
+language model (LLM) may generate code with errors that the programmer can later
+correct. A more interesting case would be a data exploration system, like the one discussed above,
+where programs only become correct after multiple subsequent choices are made, for example
 to fully specify arguments of an operation.
 
 \subparagraph{Eventual correctness.}
 The data exploration system discussed in Section~\ref{sec:examples-data} ensures correctness
-by dropping the last, not fully-specified, operation in the $\select$ operation. As a result,
-it does not support internal embedding. If the operation is dropped, we cannot reconstruct it
-from the generated source code. Generating code that includes the not-fully-specified operation
-allows external embedding, but makes the system incorrect. It would still satisfy a weaker
-definition of (eventual) correctness:
+by dropping the last non-fully-specified operation in the $\select$ operation. As a result,
+it is correct, but it does not support internal embedding. If the operation is dropped, we cannot
+reconstruct the full sequence of interactions from the generated source code. Generating code
+that includes the non-fully-specified operation allows external embedding, but makes the system
+incorrect. It would still satisfy a weaker definition of (eventual) correctness.
 
 \begin{definition}[Eventual correctness]\label{def:eventual}
 Assume that $\mathcal{E}\subseteq E$ is a subset of correct expressions,
@@ -818,77 +821,207 @@ a choose-your-own-adventure system is eventually correct with respect to $\mathc
 \end{definition}
 
 Eventual correctness models systems where some sequences of choices result in invalid programs,
-but it is always possible to make further choices to reach a valid program. In general, it is
+but it is always possible to make further choices to reach a valid program. It is
 always possible to turn an eventually correct system into a correct one:
 
 \begin{enumerate}
 \setlength{\itemsep}{5pt}
 \item As in the case of the data exploration, the system can remember the last state for which
-  the $\select$ operation returned a correct program and use it until the next correct state is
+  the $\select$ operation returned a correct program and use it in $\select$ until the next correct state is
   reached. This makes any eventually correct choose-your-own-adventure system correct, but it
   does not support internal embedding.
 
 \item Alternatively, we can construct a system that collapses all sequence of temporarilly invalid states
   $\sigma_1, \ldots, \sigma_n$ identified by $\iota_1, \ldots, \sigma_n$ where
   $\forall i\!\in\! 1\ldots n\!-\! 1\;.\;\select(\sigma_i)\notin\mathcal{E}$ and $\select(\sigma_n)\in\mathcal{E}$
-  into a single option $\iota_1\ldots\iota_n \mapsto \sigma_n$  designated by a joined identifier.
+  into a single option $\iota' \mapsto \sigma_n$ where $\iota'$ is produced by concatenating
+  identifiers $\iota_1,\ldots,\iota_n$.
   This makes the system correct and also preserves external embedding, but it potentially
-  generates too many choices that are difficult to understand.
+  generates too many choices that are difficult to navigate.
 \end{enumerate}
 
 There is more to be said about correctness of interactive programming systems, but the
 conceptual framework provided by the choose-your-own-adventure calculus makes it possible to
-take the first step. Similarly, the model lets us formally define the second property
-mentioned earlier.
+take the first step. Similarly, the model lets us formally define completeness.
 
 \subparagraph{Completeness.}
-
-todo
-
-
-..
-
-..
-
-..
+The programming language used in The Gamma allows users to write scripts that also use let bindings
+and method calls. However, for chains of member accesses which the user can construct using
+a type provider, it is possible to construct any chain just by repeatedly choosing options from
+the offered list. This is captured as the completeness property of a choose-your-own-adventure system.
 
 \begin{definition}[Completeness]
-Assume that $E$ is a set of all possible expressions in a language
-and $\mathcal{E}\subseteq E$ is a set of all expressions that are correct with respect to some
-case-specific notion of correctness (e.g. well-typed). A choose-your-own-adventure system is
-complete if:
-
-$\forall e\in \mathcal{E}.~\exists \sigma_1,\ldots,\sigma_n$ such that
-$\sigma_i \in \choices(\sigma_{i-1})$ and $e=\select(\sigma_n)$.
+Assume that $\mathcal{E}\subseteq E$ is a subset of correct expressions.
+A~choose-your-own-adventure system is complete with respect to $\mathcal{E}$ if and only if:
+\begin{itemize}
+\item $\forall e\!\in\!\mathcal{E}\,.\,\exists \sigma_1,..,\sigma_n$ and $\iota_i,..,\iota_n$ such that
+  $\iota_i\mapsto\sigma_i \in \choices(\sigma_{i-1})$ and $e=\select(\sigma_n)$.
+\end{itemize}
 \end{definition}
 
-That is, for any correct program, there is a sequence of choices that leads to a system state
-that $\select$ turns into the given program. This is a more subtle property that not all of my
-above examples have:
+A system is complete if, for any correct program, there is a sequence of choices that can be
+used to construct the given program. This is a more subtle property than correctness and
+it does not hold for all the examples dicusssed in Section~\ref{sec:examples}.
 
-* In The Gamma, the programs that can be generated are restricted - you can only use a fixed set
-  of aggregation operations (rather than writing your own) and only a restricted set of parameters
-  (sorting by a key, but not based on a custom expression). For those, the type provider is
-  complete. However, if we treated a more general-purpose query language as the underlying
-  language, the provider would not be complete.
+\begin{itemize}
+\setlength{\itemsep}{5pt}
+\item The data exploration system described in Section~\ref{sec:examples-data} would be complete
+  only if the underlying query language had a fixed set of operations, a fixed set of aggregation
+  operations (rather than letting users write their own) and a fixed set of values for each
+  parameter (sorting by a key, but not based on a custom expression). A completion system for a
+  more general-purpose query language would be incomplete.
 
-* In AI assistants, the system offers a set of constraints that is generated based on the selected
-  expression, but this does not let you construct arbitrary constraints. Moreover, because the
-  $\select$ operation is AI-based, it is not guaranteed that there is a way to get it to generate
-  a specific program (unless we can supply constraints that restrict the set of programs $E_\boldsymbol{c}$
-  to just a single program).
+\item For type providers (Section~\ref{sec:examples-tps}), the completion mechanism is complete,
+  because it offers all available members of the type (and ``.'' has to be followed by a member
+  access). Consequently, the type provider in The Gamma is also complete. Even if the underlying
+  query language is more expressive, it is hidden from the user and the system offers all
+  available members.
 
-* In interactive theorem prover, we could possibly offer all possible ways of filling a hole
-  (up to renaming), but this would not be very practical. It is more likely that
-  tactics will only generate a subset of valid proof/program steps and the user has to write some
-  other steps manually.
+\item For AI assistants (Section~\ref{sec:examples-aias}), the system offers a set of constraints
+  based on the current inferred program. It does not let the user construct arbitrary constraints.
+  Moreover, because the $\mathit{arg\,max}$ operation used in $\select$ performs statistical
+  optimization, there is no guarantee that it can be used to generate a specific program.
+  The system is only complete if it is possible to choose a constraint set $\boldsymbol{c}$ that
+  restrict the set of programs $E_\boldsymbol{c}$ to a single given program. This is the case
+  only for some AI assistants (e.g., datadiff, which always offers constraints to map column to
+  any chosen other column).
 
-The nice thing about the choose-your-own-adventure formalism is that it also lets us talk about
-(and think about!) properties that are more specifically about the user interaction with an
-interactive programming system.
+\item A type-directed synthesis system (Section~\ref{sec:examples-thm}), or an interactive theorem
+  prover could offer all possible ways of filling a hole with an expression containing further
+  holes as sub-expressions. This would make the system complete (up to renaming of variables this
+  may introduce), but the great number of generated options would be impractical. A realistic
+  system would only generate a subset of most useful proof/program steps and let the user write
+  other steps manually (interactive proof construction in Idris can be seen as operating in this way).
+\end{itemize}
+
+Correctness and completeness are arguably both desirable properties of a choose-your-own-adventure
+system. Unlike for example type soundess, they are not strictly necessary in practice and are best
+seen as design trade-offs that designers should consider.
 
 \section{Applications}
 \label{sec:applications}
+
+The choose-your-own-adventure calculus lets us treat a wide range of interactive programming
+systems as instances of the same general pattern. This makes it possible to discuss properties
+of the systems (as done in the previous section), reuse components in system implementations,
+but also transfer ideas across different domains. In this section, we discuss three ideas that
+emerged in the context of a specific interactive system, but could be applied to any system
+based on the choose-your-own-adventure pattern.
+
+~
+
+
+\begin{figure}[t]
+\definecolor{shade1}{HTML}{f0f0f0}
+\colorbox{shade1}{\colorbox{white}{
+$\begin{array}{l}
+\kvd{theorem}~\ident{sum-z-rh}\!:~\kvd{forall}~n~\kvd{exists}~n+(\ident{z})=n.\\
+\kvd{theorem}~\ident{sum-s-rh}\!:~\kvd{forall}~d_1:n_1+n_2=n_3~\kvd{exists}~n_1+(\ident{s}~n_2)=(\ident{s}~n_3).\\[0.75em]
+\kvd{theorem}~\ident{sum-commutes}\!:~\kvd{forall}~d_1:n_1+n_2=n_3~\kvd{exists}~n_2+n_1=n_3\\
+\quad\;\;\; d_2: n_2 + n_1 = n_3~\kvd{by induction on}~d_1\!:\\
+\quad\colorbox{shade1}{$
+\begin{array}{l}
+  \kvd{case rule}\\[0.25em]
+  \quad\;\;\; \dfrac{}{\mathit{dzc}:~(\ident{z})+n=n}~\ident{sum-z}\\[0.25em]
+  \quad\kvd{is}\\
+  \quad\;\;\; \mathit{dz}_1: n + (\ident{z}) = n~\kvd{by theorem}~\ident{sum-z-rh}~\kvd{on}~n\\
+  \kvd{end case}\\
+  \kvd{case rule}\\[0.25em]
+  \quad\;\;\;\dfrac{\mathit{dsp}\!: n_1' + n_2 = n_3'}{\mathit{dsc}\!: (\ident{s}~n_1') + n_2 = (\ident{s}~n_3')}~\ident{sum-s}\\[0.25em]
+  \quad\kvd{is}\\
+  \quad\colorbox{white}{$\begin{array}{l}
+    \;\;\;\mathit{ds}_1\!: n_2 + n_1' = n_3'~\kvd{by induction hypothesis on}~\mathit{dsp}\\
+    \colorbox{shade1}{$\begin{array}{l}
+    \mathit{ds}_2\!: n_2 + (\ident{s} n_1') = (\ident{s} n_3')~\kvd{by theorem}~\ident{sum-s-rh}~\kvd{on}~\mathit{ds}_1\hspace{8em}~
+    \end{array}$}\\
+  \end{array}$}\\
+  \kvd{end case}\\
+\end{array}
+$}\\
+\quad\;\;\;\kvd{end induction}\\
+\kvd{end theorem}
+\end{array}
+$}}
+\caption{A proof of commutativity of $+$ in Peano arithmetic constructed using mixed-initiative
+  interaction. Parts generated by the system are highlighted with gray background.
+  After the user writes a theorem and specifies induction, the system completes the
+  first case. User then specifies how to apply the induction hypothesis and the system completes
+  the proof.}
+\label{fig:proof}
+\end{figure}
+
+
+\subsection{Mixed-initiative interaction}
+When using an interactive theorem prover, one typically constructs the proof manually until an
+automated strategy can fill in the remaining gaps. This is the case with Idris proof search,
+as well as Coq \texttt{auto} tactics. Richer ways of interacting exist \cite{lowe-1997-xbarnacle},
+but are less common. We developed a prototype mixed-initiative theorem prover [report citation
+omitted] that supports a more collaborative way of working where the system completes some
+steps automatically, but defers back to the user when it gets stuck.
+
+\subparagraph{Mixed-initiative theorem proving.}
+As an illustration of the mixed-initiative proving, consider Figure~\ref{fig:proof} which
+shows a proof of commutativity of $+$ in Peano arithmetic. The figure shows a version of our example
+[report citation omitted],\footnote{Adapted from \url{https://github.com/boyland/sasylf/blob/master/examples/sum.slf}}
+simplified for brevity and written using the SASyLF notation \cite{aldrich-2008-sasylf}.
+After writing proofs of \ident{sum-z-rh} and \ident{sum-s-rh} (not shown), the user states
+\ident{sum-commutes} and specifies the structure of the induction. They then invoke the automatic
+search, which completes the first case, but gets stuck in the second case, because it fails
+to apply the induction hypothesis (in our full example, the failure is more subtle). The user
+then specifies how to apply the induction hypothesis and the system automatically completes the
+proof.
+
+The interaction can be revisited from the perspective of the choose-your-own-adventure system
+discussed in Section~\ref{sec:examples-thm}. An interactive theorem prover generates possible
+completions using available tactics and offers them to the user, who chooses a tactic and
+applies it to transform the proof. In the automatic mode, the interactive theorem prover
+recursively searches through the available choices. If it finds one that results in a complete
+proof, it stops. Otherwise, it completes a number of steps (determined by some heuristic)
+and defers back to the user who chooses the next step and completes the proof manually or
+invokes the automatic search again.
+
+\subparagraph{Generalised mixed-initiative interaction.}
+The mixed-initiative mode of interaction combines manual interaction with automatic search.
+In order to support automatic search, the system needs a metric that determines whether a
+constructed program is correct (as when proving a given theorem) or whether it is an improvement
+over another equivalent program (for example when refactoring). This general way of working
+can be used in other interactive programming systems:
+
+\begin{itemize}
+\item A system for type-directed program synthesis could automatically synthesize parts of a
+  program (e.g., pattern matching and implementation for some of the cases), but ask user for
+  input in order to complete branches where solution was not found automatically.
+\item In data exploration, a system could perform automatic search through the available operations
+  in order to transform data into a more regular format, according to a suitability
+  metric as done, for example, in the Proactive Wrangling system~\cite{guo-2011-proactive}.
+\end{itemize}
+
+We can understand how mixed-initiative interactive systems as extensions
+built on top of the choose-your-own-adventure calculus. A mixed-initiative interactive system
+defines an operation \ident{suggest} that recommends a sequence of choices for a given state.
+
+\begin{definition}[Mixed-initiative system]
+A choose-your-own-adventure system supports mixed-initiative mode of interaction if it is
+equipped with an operation $\suggest$ such that:
+\begin{itemize}
+  \item $\suggest(\sigma_0)=\iota_1, \ldots, \iota_n$ such that
+    $\forall i\!\in\! 1\ldots n\;.\;\iota_i\mapsto\sigma_i\in\choices(\sigma_{i-1})$.
+\end{itemize}
+\end{definition}
+
+The definition only requires that the suggested sequence of choices is valid, but it
+does not specify how exactly the system should make the recommendations. This is specific to
+a particular system. An interactive theorem prover will try to find a proof or solve
+sub-goals, whereas data wrangling system may try to improve the structure of data.
+In practice, the suggestion should improve the quality of the constructed program so that
+$\select(\sigma_n)$ is better than $\select(\sigma_0)$, but we leave the definition flexible
+to accommodate a broader range of potential uses.
+
+\subsection{LLM assistant for data exploration}
+
+\subsection{Programming by demonstration}
+
+
 
 ways of integrating automation with manual interaction
 - confirm each step vs. auto and retrace
@@ -903,6 +1036,41 @@ hard to edit - you cannot easily go back
 
 \newpage
 
+% cite: https://link.springer.com/chapter/10.1007/3-540-63104-6_39
+
 \bibliography{paper}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \end{document}
