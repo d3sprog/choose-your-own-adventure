@@ -10,8 +10,8 @@
 \newcommand{\choices}{\textnormal{\ident{choices}}}
 \newcommand{\op}{\textit{op}}
 \newcommand{\vect}[1]{\lbrack #1 \rbrack}
-%\newcommand{\preview}{\textnormal{\ident{preview}}}
-%\newcommand{\links}{\textnormal{\ident{links}}}
+\newcommand{\preview}{\textnormal{\ident{preview}}}
+\newcommand{\links}{\textnormal{\ident{links}}}
 \DeclareMathOperator{\argmax}{arg\,max}
 
 \bibliographystyle{plainurl}
@@ -33,21 +33,22 @@
 \maketitle
 
 \begin{abstract}
-
-Some of the most remarkable results in mathematics reveal connections between different
+\noindent
+TODO: Some of the most remarkable results in mathematics reveal connections between different
 branches of the discipline. The aim of this paper is to point out a modest, but still
 remarkable, similarity between a range of different interactive programming systems.
 
 ~
 
-use a simple formal mathematical model
-that we call \emph{the choose-your-own-adventure calculus} to
-
-
+\noindent
 TODO: Say somewhere that this also formalizes things like mixed-initiative interaction and
 programming by demonstration
 
-% and enable a transfer of ideas between them
+~
+
+\noindent
+TODO: It is mainly about giving us a nice way to talk about lots of things in interactive
+programming systems and enable a transfer of ideas between them
 
 \end{abstract}
 
@@ -204,7 +205,7 @@ When the AI assistants runs automatically, it correctly maps the numerical colum
 incorrectly maps the \ident{Urban.rural} (2014) column to \ident{Nation} (2015). This happens
 because both columns are categorical and have three values with similar distribution. A data
 analyst can easily spot the mistake. They click the ``+'' button to add a constraint and choose
-\ident{Don't match Urban.rural and Nation} to specify that the two columns should not be matched.
+\ident{Don't match `Urban.rural' and `Nation'} to specify that the two columns should not be matched.
 Datadiff then runs again and finds the correct matching.
 
 \begin{figure}[t]
@@ -988,6 +989,7 @@ over another equivalent program (for example when refactoring). This general way
 can be used in other interactive programming systems:
 
 \begin{itemize}
+\setlength{\itemsep}{5pt}
 \item A system for type-directed program synthesis could automatically synthesize parts of a
   program (e.g., pattern matching and implementation for some of the cases), but ask user for
   input in order to complete branches where solution was not found automatically.
@@ -1017,26 +1019,236 @@ In practice, the suggestion should improve the quality of the constructed progra
 $\select(\sigma_n)$ is better than $\select(\sigma_0)$, but we leave the definition flexible
 to accommodate a broader range of potential uses.
 
-\subsection{LLM assistant for data exploration}
+\newpage
 
-\subsection{Programming by demonstration}
+\subsection{Language model-based completion}
+Large language models can assist with data exploration by generating snippets of code based
+on natural language description of the problem \cite{yin-2023-codegen}. A recognized drawback of
+this approach is that the user may gain only cursory understanding of the code and overlook
+errors. Various systems address this by generating explanations alongside with code \cite{nooralahzadeh-2024-data}.
+We developed a system that provides LLM-based natural language assistance for The Gamma [report
+citation omitted] based on a mechanism that assists the user and is also applicable to other
+choose-your-own-adventure systems.
+
+\begin{figure}
+{\raggedright\ttfamily\small
+You are helping user to complete a task in an interactive programming environment. The user's
+query is: "Give me the athlete with the largest number of gold medals."
+
+~\\[-0.75em]
+
+The query built so far is: "olympics"."group data"."by Athlete".
+
+~\\[-0.75em]
+
+The environment offers the user possible options. Choose an option that the should be applied to the current dataset:
+
+~\\[-0.75em]
+
+1.\hspace{0.4em} count distinct Athlete\\
+2.\hspace{0.4em} count distinct Discipline\\
+\hspace{2.3em}\lbrack\textit{multiple options omitted}\rbrack \\
+13. count all\\
+14. concatenate Athlete\\
+15. concatenate Discipline\\
+\hspace{2.3em}\lbrack\textit{multiple options omitted}\rbrack\\
+23. sum Gold\\
+24. sum Silver\\
+25. sum Year\\
+
+~\\[-0.75em]
+
+You should answer with the number of the option and no further explanation.}
+\caption{A prompt to complete a data exploration query based on a natural language
+question, which uses LLM to choose from the available completion options.}
+\label{fig:llm}
+\end{figure}
 
 
+\subparagraph{LLM assistant for The Gamma.}
+Our system [reprot citation omitted] integrates a type provider like the one used in The Gamma
+with a large language model (GPT-3.5 and GPT-4). It lets user ask a natural language query and
+then recommends choices that the user should make in order to answer the query. Our system does
+not use LLM to generate code, but to recommend an option offered by the type provider. To do so,
+we construct a prompt as shown in Figure~\ref{fig:llm}, which asks the LLM to recommend the next
+choice. In this example, the LLM is able to reliably respond with ``23'', which is the correct
+choice. Our system then pre-selects it in the completion list offered to the user.
 
-ways of integrating automation with manual interaction
-- confirm each step vs. auto and retrace
+In contrast to one-shot generation of Python or SQL code snippets, our approach guides the user
+through the program construction, providing them with an opportunity to review and check if the
+program logic matches their expectations.
 
-\cite{rein-2019-exploratory}
+In addition to the basic prompting strategy outlined above, we evaluated a strategy where the LLM
+is provided with lookahead information, i.e., for each of the choices, we also include a list of
+the choices that will available subsequently (formatted as either inline information in parentheses
+or as a nested bullet-point list). We use two different data sources to evaluate the system,
+each with 10 queries for which we manually determine the correct choices. To compare the results,
+we compute a score for each query by following the correct path, asking for an LLM recommendation
+in each step and computing the ratio of correct choices. Figure~\ref{fig:methods} shows the
+average scores for five different strategies, using two different LLM engines.
 
-\cite{verter-2024-mixed}
+\begin{figure}[t]
+\includegraphics[width=0.7\textwidth]{fig/llm.png}
+\caption{A plot showing the average scores for two different large language models (GPT-3.5 and GPT-4)
+solving 20 challenge problems using five different prompting strategies.}
+\label{fig:methods}
+\end{figure}
+
+The results suggest that, when using a more advanced LLM system, the ratio of correct
+recommendations is high-enough to be practically useful. It also shows that providing more
+information to the LLM through the lookahead mechanism improves the quality of the recommendation,
+in a consistent way across multiple LLM systems. Arguably, offering a recommendation is preferrable
+over providing an opaque solution, because it keeps the human in the loop \cite{sellen-2024-copilot}
+and avoids ``ironies of automation'' \cite{bainbridge-1983-ironies} including deskilling.
+
+\subparagraph{Generalised LLM assistant.}
+The LLM-based recommendation engine developed for The Gamma can be implemented for any
+choose-your-own-adventure system. As can be seen in Figure~\ref{fig:llm}, the information needed
+to construct an LLM prompt comprise only the natural language query entered by the user,
+a sequence of previously made choices $\iota_1, \ldots, \iota_{n-1}$ and the identifiers
+$\iota_n, \iota_n', \iota_n'', \ldots$ of the choices offered by the $\choices$ operation.
+As the LLM-based recommendations are based on natural language analysis of the prompt,
+the quality of the recommendations depends on how semantically meaningful the generated
+identifiers are.
+
+An LLM-based recommendation engine can be useful for a number of the choose-your-own-adventure
+interactive systems discussed in this paper:
+
+\begin{itemize}
+\setlength{\itemsep}{5pt}
+\item We demonstrated the usefulness of the system for data exploration in The Gamma.
+  Type providers for structured data \cite{petricek-2016-fsdata} typically generate small number
+  of choices that the user can navigate without assistance, but navigating the schemas generated by
+  type providers for semantic knowledge bases \cite{syme-2012-inforich} may be simplified through a
+  natural language query.
+\item The datadiff AI assistant discussed in Section~\ref{sec:motivation} matches columns based
+  on statistical distribution and ignores column names. An LLM-based recommendation engine is
+  useful in this case, because it is able to recommend the option \ident{Don't match
+  `Urban.rural' and `Nation'} based solely on its name. For other AI assistants, the LLM-based
+  recommendation engine would need access to the input data in order to be useful.
+\item The problem of predicting steps in order to construct a proof is known as
+  proofstep generation in literature focused on deep learning for theorem
+  proving~\cite{zhaoyu-2024-deep}. Although most systems use models trained specifically for the
+  task, there is also interest in using general-purpose LLMs~\cite{zhang-2023-proofs}.
+  Our approach suggests a potential prompting strategy.
+\end{itemize}
+
+It is interesting to note that the choose-your-own-adventure calculus provides a common structure
+that makes it possible to integrate multiple different approaches to assisting human in program
+construction, ranging from automatic search (if we can provide a suitable heuristic) to
+the use of LLMs (if generated choices carry enough semantic information). It can also serve as the
+basis for visual programming environments discussed next.
+
+\begin{figure}[t]
+  \includegraphics[width=0.9\textwidth]{fig/histogram.png}
+  \caption{Programming by demonstration in Histogram -- (1) the user constructs program to load
+    data, (2) then they filter data using graphical interface, which (3) records an operation
+    corresponding to the interaction in code.}
+  \label{fig:histogram}
+\end{figure}
+
+\subsection{Direct manipulation}
+
+The Histogram programming environment~\cite{petricek-2019-histogram} provides a code completion
+mechanism that can be used both to choose operations (as with type providers) and to specify
+their parameters (by offering available values in context as possible arguments). It makes it
+possible to evaluate sub-expressions at a fine-grained level and also refines type information
+based on runtime values. However, it also supports programming by demonstration
+\cite{cypher-1993-pbd,kandel-2011-wrangler}.
+
+As illustrated in Figure~\ref{fig:histogram}, when the user loads data, they can manipulate it
+in a table through a direct manipulation interface~\cite{shneiderman-1983-direct}. In Histogram,
+interacting with the table triggers a sequence of operations that construct code. A similar
+functionality is available in The Gamma, where operations for manipulating tabular data can be
+selected not only through auto-completion, but also by interacting with the live preview.
+
+The choose-your-own-adventure calculus enables a more general perspective on the programming
+by demonstration interaction as implemented by Histogram. When interacting with a live
+preview, the user is using a graphical interface to choose an option offered by $\choices$.
+The operation appends an item to the sequence of choices, updates the system state
+and generates a new preview where the choice is reflected (e.g., by filtering the table).
+
+An interesting question is whether a program can be constructed solely through direct manipulation,
+by interacting with the live previews. For this to be possible, the live preview needs to
+offer links to all the possible options offered by $\choices$. This requires a careful design
+of live previews. In Histogram (Figure~\ref{fig:histogram}), the live preview offers interactive
+elements for filtering based on equality test (row of drop-downs), sorting (up/down arrows)
+and indexing (indices in the ``\#'' column), but some operations (such as aggregation) can only
+be constructed through code. Previews in The Gamma provide interactive elements for all options,
+but those cannot always be integrated with the data display. For example, after choosing a grouping
+key (Figure~\ref{fig:groupby}), the preview shows the key column, but other columns are hidden.
+Specifying an aggregation thus requires an additional (somewhat arbitrary) ``+'' button that
+provides access to the available choices.
+
+\begin{figure}[t]
+\includegraphics[width=0.6\textwidth]{fig/thegamma3.png}
+\caption{Specifying aggregation in The Gamma through a live preview. Grouping keys can be
+  selected from a drop-down, while aggregations have to be added through a menu.}
+\label{fig:groupby}
+\end{figure}
+
+We can use the choose-your-own-adventure calculus to make the question whether all
+programs can be constructed through direct manipulation more precise. Assume
+$\preview(e)=p$ is a preview constructed for an expression $e$ and $\links(p)=\iota_1, \ldots, \iota_n$
+are identifiers that can be invoked through the preview (akin to links in a hypertext document).
+
+\begin{definition}[Direct manipulation]
+A choose-your-own-adventure system with previews defined by $\preview$ and $\links$ supports
+full direct manipulation if:
+\begin{itemize}
+\item $\forall \sigma, e$ such that $\select(\sigma)=e$ it is the case that
+  $\forall \iota'\mapsto\sigma'\in\choices(\sigma)\,.\,\iota'\!\in\!\links(\preview(e))$.
+\end{itemize}
+\end{definition}
+
+A system supports full direct manipulation if any program can be constructed by interacting with
+the live previews, created based on the gradually constructed programs. As illustrated by The Gamma,
+this can always be achieved by listing the options in a menu, but it is more interesting to see
+if the links can be directly embedded in the preview as in the data table interface of Histogram.
+
+The idea of directly mapping elements in a user interface to underlying structure of the
+programming system has previously been implemented in pioneering user interface systems
+including the Alternate Reality Kit~\cite{randall-1986-ark} and the Morphic framework for
+Self and Squeak \cite{maloney-1995-morphic,maloney-2001-morphic}. In those systems, user interface
+interactions directly map to messages sent to the underlying object and the halo element in
+Morphic plays a similar role to the additional menu in The Gamma. It remains to be seen if
+the choose-your-own-adventure calculus can provide a new way of looking at those systems.
 
 \section{Limitations}
 
-hard to edit - you cannot easily go back
+TODO: Is this too general to be practically useful? E.g. LLM for interactive theorem provers
+arguably needs more specific information.
+
+~
+
+\noindent
+TODO: What if the list of choices is infinite?
+
+~
+
+\noindent
+TODO: How do you go back and revisit earlier choices? Backtracking in theorem provers or
+fixing earlier part of the query in data exploration. Sometimes, you can retrace the
+steps, but they may change...
+
+~
+
+\noindent
+Related work - mbark for emacs, VS code command palette
+
+~
+
+\noindent
+Alphageometry paper - follows a similar way of working to choose-your-own-adventure
+
+\section{Conclusions}
+
+TODO: Some conclusions
+1) lets us ask all those questions
+2) let ideas cross between domains
 
 \newpage
 
-% cite: https://link.springer.com/chapter/10.1007/3-540-63104-6_39
 
 \bibliography{paper}
 
