@@ -1,6 +1,5 @@
 \documentclass[a4paper,UKenglish,cleveref, autoref, thm-restate]{lipics-v2021}
 \hideLIPIcs
-
 \newcommand{\ident}[1]{\textsf{#1}}
 \newcommand{\kvd}[1]{\textsf{\bfseries #1}}
 \newcommand{\ddident}[1]{\guillemotleft\ident{#1}\guillemotright}
@@ -13,6 +12,7 @@
 \newcommand{\preview}{\textnormal{\ident{preview}}}
 \newcommand{\links}{\textnormal{\ident{links}}}
 \DeclareMathOperator{\argmax}{arg\,max}
+
 
 \bibliographystyle{plainurl}
 \title{The Choose-Your-Own-Adventure Calculus (Pearl/Brave New Idea)}
@@ -236,7 +236,6 @@ constraints recommended by the AI assistant which may not be complete.
   \label{fig:alf}
 \end{figure}
 
-
 \subparagraph{Interactive theorem provers.}
 A fourth example of the choose-your-own-adventure interactive pattern can be found in interactive
 theorem provers. When writing programs in systems like Idris \cite{brady-2021-idris2}, the
@@ -267,6 +266,39 @@ systems like Idris or Coq. The two would work differently. As in \textsc{Alf}, I
 represents the proof itself and a completion would replace a hole with a suggested term. In Coq,
 the proof is a series of tactic invocations and so selected completions would be added to this
 list and would form a trace of the interaction with the user.
+
+\newpage
+
+\begin{figure}[t]
+  \includegraphics[width=0.55\textwidth]{fig/sandblocks.png}
+  \caption{Constructing a program using the Sandblocks structure editor \cite{beckmann-2023-all}.
+    The user is typing the start of an expression and context menu offers possible production
+    rules according to a grammar.}
+  \label{fig:sand}
+\end{figure}
+
+\subparagraph{Structure editors.}
+Structure editors make it possible to construct programs by manipulating the abstract syntax tree
+of a program rather than by working with textual representation. The interaction with a structure
+editor can be based on menus \cite{teitelbaum-1981-synth}, key bindings \cite{weber-2017-editors},
+tiles~\cite{moon-2022-tylr} and a range of other approaches.
+
+Sandblocks~\cite{beckmann-2023-all} is an example of a recent structure editor that is interesting
+for multiple reasons. First, the editor is automatically generated from a grammar. Second, the
+editor combines keyboard input with context menus (Figure~\ref{fig:sand}). In the above example,
+the user is typing code and needs to fill a placeholder for an expression. After they type the
+start of the expression, the editor offers a completion list with possible production rules from
+the grammar that are valid in the given context and are compatible with the text typed so far. The
+user can continue typing (to further refine the recommendation), but they can also select a rule
+from the menu. This completes the expression according to the production rule, leaving further
+empty holes in the code.
+
+In Sandblocks, the context menus serve more as hints and users of the editor often
+construct programs through typing, but the system illustrates the fact that structure editors
+can also be based on the interaction pattern captured in this paper. The editor can offer
+all possible production rules based on the given grammar and the user could construct an
+entire program by choosing one of the rules (and manually entering primitive terminals such as
+strings and identifiers).
 
 \newpage
 
@@ -305,26 +337,27 @@ the structure of a system that supports the choose-your-own-adventure interactio
 The definition is close to that of an AI assistant \cite{petricek-2023-aias}, which is written
 using a language specific for the data wrangling domain (such as cleaning scripts or input and
 output data) but is structurally similar. It is also worth noting that the definition may describe
-not just trees, but also graphs with cycles -- a system can return to an already visited state.
+not just trees, but also graphs with cycles -- a system can return to a previously visited state.
 This is not practically useful, but it does not pose a theoretical problem.
 
-\subparagraph{External mode of embedding.}
+\subparagraph{Expression completion.}
 One of the subtle questions about the choose-your-own-adventure pattern raised in the introduction
-concerns the different ways in which a trace of the interaction is embedded in the interactively
-constructed program. In the \emph{external mode}, the interaction results in code that becomes a
-part of the edited program, but it is not possible to reconstruct the steps used to generate the code.
+is whether a trace of the interaction can be reconstructed from the source code of an interactively
+constructed program. That is, if we follow a sequence of choices $\iota_1, \ldots, \iota_n$ to
+construct a program $e$, is it possible to recover the original sequene of choices from the
+program $e$.
 
 The choose-your-own-adventure interaction pattern is typically used to complete a partial program.
 To model this, we assume that the host language has a notion of a hole, written as~$?$
-and that a user can select a part of program to invoke the completion on. We write $E[e]$ for a
-completion context, akin to evaluation contexts in operational semantics.
+and that a user can select a part of program to invoke the completion on. When invoked on
+an expression containing multiple holes, the system can start by completing the first hole.
 
+We write $E[e]$ for a completion context, akin to evaluation contexts in operational semantics.
 We assume that, for a program containing a hole in a completion context $E[?]$, we can construct
-an initial choose-your-own-adventure state using an operation
-$\ident{init}(E[?])=\sigmaN$.
+an initial choose-your-own-adventure state using an operation $\ident{init}(E[?])=\sigmaN$.
 
-\begin{definition}\label{def:external}
-An expression $E[?]$ is completed as $E[e]$ via external embedding of an interaction with
+\begin{definition}[Expression completion]
+An expression $E[?]$ is completed as $E[e]$ through an interaction with
 a choose-your-own-adventure system consisting of \choices\ and \select\ if:
 
 \vspace{-0.5em}
@@ -338,44 +371,43 @@ a choose-your-own-adventure system consisting of \choices\ and \select\ if:
 \end{enumerate}
 \end{definition}
 
-As we will see when we revisit the earlier examples formally, the external mode of embedding is
-used, for example, in the case of interactive theorem provers like \textsc{Alf} or Idris.
+As we will see when we revisit the earlier examples formally, this way of invoking a choose-your-own-adventure
+system is used, for example, in the case of interactive theorem provers like \textsc{Alf} or Idris.
 In those systems, the user triggers the completion on a proof (program) containing a hole.
 They then fill the hole and, possibly iteratively, further holes in the generated proof. The final
 expression is embedded in the source code, but it does not indicate what options, identified by
 $\iota_1, \ldots, \iota_n$, were selected in the process.
 
-\subparagraph{Internal mode of embedding.}
-In the \emph{internal mode}, a trace of the interaction with a choose-your-own-adventure system
-is embedded directly in the constructed program. This is the case with type providers, where a
-user chooses a sequence of object members to be accessed. The same would be the case in a completion
-system for Coq that would offer tactics to apply, becuase the resulting proof would contain a
-record of the selected tactics.
+\subparagraph{Reconstructible completion.}
+In many choose-your-own-adventure systems, it is possible to reconstruct a trace of the interaction
+through which a program was constructed. This is the case with type providers, where a user chooses
+a sequence of object members to be accessed and those members directly appear in the source code.
+The same would be the case in a completion system for Coq that would offer tactics to apply,
+becuase the resulting proof would contain a record of the selected tactics.
 
-To talk about the internal mode formally, we again need the \ident{init} operation, but also an
-operation \ident{decode} that extracts identifiers of invoked completions from an expression.
-An internal embedding is the same as external embedding with an additional constraint:
+For systems such as type providers, we say that that expression completion is \emph{reconstructible}.
+To capture the notion formally, we again need the \ident{init} operation, but also an operation
+\ident{decode} that extracts identifiers of invoked completions from an expression:
 
-\begin{definition}\label{def:internal}
-An expression $E[?]$ is completed as $E[e]$ via internal embedding of an interaction with
+\begin{definition}[Reconstructible expression completion]
+An expression $E[?]$ is reconstructibly completed as $E[e]$ through an interaction with
 a choose-your-own-adventure system consisting of \choices\ and \select\ if:
 
 \vspace{-0.5em}
 \raggedright
 \begin{enumerate}
-\item $E[?]$ is completed as $E[e]$ via external embedding using \ident{init}, \choices\ and \select\\
+\item $E[?]$ is completed as $E[e]$ using \ident{init}, \choices\ and \select\\
   through a series of choices designated by identifiers $\iota_1, \ldots, \iota_n$,
 \item it also holds that $\ident{decode}(e)=(\iota_1, \ldots, \iota_n)$.
 \end{enumerate}
 \end{definition}
 
-If a choose-your-own-adventure system is integrated in a programming language
-through internal embedding, we can reconstruct the choices through which the user constructed
+If the integration of a choose-your-own-adventure system with a host programming language
+uses reconstructible expression completion, we can recover the choices through which the user completed
 an expression $e$ in a completion context $E[e]$, assuming they used the interactive system rather
 than entering the code directly. This also means that we can reconstruct the final state $\sigma_n$
 of the system by starting from $\ident{init}(E[?])$ and following the choices specified by
 $\iota_1, \ldots, \iota_n$.
-
 
 \newpage
 \section{Examples}
@@ -712,6 +744,136 @@ constructs the term, but does not record the completion choices. That said, a sy
 that constructs a sequence of tactics could be modelled too if the state was a sequence of
 tactics and $\choices$ appended the available tactics as options to the end of the current sequence.
 
+\newpage
+\begin{figure}[t]
+\small
+(a) Grammar of a minimal language with declarations and expressions
+\[
+\begin{array}{rcl}
+\mathit{expr} & := & \mathit{literal} ~~|~~ \mathit{expr}+\mathit{expr} ~~|~~ \mathit{ident} ~~|~~ \mathit{expr}(\mathit{expr}^{*})\\
+\mathit{decl} & := & \kvd{function}~\mathit{ident}(\mathit{ident}^{*}) \{ \mathit{block} \} ~~|~~ \kvd{let}~\mathit{ident}=\mathit{expr}\\\
+\mathit{stmt} & := & \mathit{expr} ~~ | ~~ \mathit{decl}\\
+\mathit{block} & := & \mathit{stmt}^{*}
+\end{array}
+\]
+\begin{minipage}[t]{.5\textwidth}
+(b) Construction based on the grammar
+
+\begin{enumerate}
+\setlength{\itemsep}{0.75em}
+\item Add $\mathit{decl}$ as the first $\mathit{stmt}$ and fill two\\
+  $\mathit{ident}$ leafs (name and parameters)\\[0.5em]
+  $\begin{array}{l}
+  \kvd{function}~\ident{sayHello}(\ident{who})~\{\\
+  \quad\mathit{stmt}^{*}\\
+  \}\\
+  \mathit{stmt}^{*}
+  \end{array}$
+
+\item Sequentiall fill holes with invocations\\[0.5em]
+  $\begin{array}{l}
+  \kvd{function}~\ident{sayHello}(\ident{who})~\{\\
+  \quad\ident{print}(\texttt{''Hello ''} + \ident{who})\\
+  \}\\
+  \ident{sayHello}(\texttt{''world''})
+  \end{array}$
+\end{enumerate}
+\end{minipage}%
+\begin{minipage}[t]{.5\textwidth}
+(c) Alternative sequence based on refactorings
+
+\begin{enumerate}
+\setlength{\itemsep}{0.75em}
+\item Start with a small working program\\[0.5em]
+  $\begin{array}{l}
+  \ident{print}(\texttt{''Hello world''})
+  \end{array}$
+
+\item Extract literal into a variable\\[0.75em]
+  $\begin{array}{l}
+  \kvd{let}~\ident{who} = \texttt{''world''}\\
+  \ident{print}(\texttt{''Hello ''} + \ident{who})
+  \end{array}$
+
+\item Extract function with a parameter\\[0.75em]
+  $\begin{array}{l}
+  \kvd{function}~\ident{sayHello}(\ident{who})~\{\\
+  \quad\ident{print}(\texttt{''Hello ''} + \ident{who})\\
+  \}\\
+  \ident{sayHello}(\texttt{''world''})
+  \end{array}$
+
+\end{enumerate}
+\end{minipage}
+\caption{Comparison of a naive grammar-based program construction (b) and more user-friendly
+  program construction through a sequence of refactorings (c).}
+\label{fig:grammar}
+\end{figure}
+
+\subsection{Structure editors}
+Structure editors form a broad range of systems that support different kinds of interactions
+for constructing programs. This allows us to demonstrate some of the design considerations for
+choose-your-own-adventure systems. We first look at a simple choose-your-own-adventure system
+derived from a context-free grammar, which is inspired by Sandblocks~\cite{beckmann-2023-all}.
+We then discuss how such system could support refactorings in a way similar to
+\textsc{Deuce}~\cite{hempel-2018-deuce}, extending the basic grammar-directed way of working.
+
+\subparagraph{Formal model.}
+We model a system that, similarly to Sandblocks, generates choices automatically based on a given
+context-free grammar. We assume the grammar $(\mathcal{N},\Sigma,\mathcal{P},S)$ consists of set of
+non-terminal symbols $\mathcal{N}$, terminal symbols $\Sigma$, start symbol $S\in\mathcal{N}$
+and production rules $\mathcal{P}$ of the form $n\mapsto\boldsymbol{s}$ where
+$n\in\mathcal{N}$ and $\boldsymbol{s}\in(\mathcal{N}\cup\Sigma)^{*}$ (we write $n$ for non-terminals,
+$t$ for terminals and $s$ for all symbols; bold indicates a sequence of symbols).
+
+When interacting with the choose-your-own-adventure system, the user is gradually constructing a
+program (sentence) of a form $\boldsymbol{s}\in(\mathcal{N}\cup\Sigma)^{*}$. The system state is the program (sentence)
+constructed so far, i.e., $\sigma = \boldsymbol{s}$. The process can continue
+as long as there are non-terminal symbols in the sentence and production rules applicable to them.
+
+In general, the $\choices$ operation could recommend applicable production rules for any
+non-terminal in the sentence. The following always chooses the first non-terminal by assuming
+a sentence $\boldsymbol{t}n\boldsymbol{s}$ consisting of a sequence of terminals, followed by a
+single non-terminal and a sequence of arbitrary symbols (we discuss sequentialization
+in Section~\ref{sec:limitations}). The $\choices$ operation then finds all applicable production
+rules and offers them as choices. In a real-world system, identifiers $\iota_i$ are formed by
+the names of the rules (omitted from our formalism).
+\[
+\begin{array}{rcl}
+\choices(\boldsymbol{t}n\boldsymbol{s}) &=& \{\; \iota_i \mapsto \boldsymbol{t}\boldsymbol{s_i}\boldsymbol{s} ~|~ \forall (n\mapsto\boldsymbol{s_i})\in \mathcal{P} ~\}\\
+\select(\boldsymbol{s}) &=& \boldsymbol{s}
+\end{array}
+\]
+Unlike in the case of data exploration, the $\select$ operation does not ensure
+that a program is fully constructed and the returned sentence may contain further non-terminals.
+
+\subparagraph{Program refactorings.}
+The formal model derived from a context-free grammar is an adequate model for structure
+editors such as Sandblocks~\cite{beckmann-2023-all}, but many structure editors offer more
+advanced operations for program construction. \textsc{Deuce}~\cite{hempel-2018-deuce},
+which is a structure editor for a simple programming environment for creating Scalable
+Vector Graphics (SVG) images, for example, makes it possible to transform program through
+a range of refactorings such as extract function, introduce a local variable, inline definition,
+reorder arguments and more.
+
+Figure~\ref{fig:grammar} illustrates program construction via refactoring using a simple
+example. It defines a small language with a grammar. Figure~\ref{fig:grammar} (b) shows some
+of the steps necessary to construct a simple program via the grammar rules.
+Figure~\ref{fig:grammar} (c) shows a more appealing alternative where the programmer starts
+with a simple program and then gradually makes it more general through a sequence of refactorings.
+
+Modelling refactorings formally requires a more expressive framework~\cite{steimann-2011-refactoring},
+so we omit the details. The $\choices$ operation would need to identify applicable refactorings
+for the current program and offer them to the user.
+
+An important point illustrated by the two examples is whether the expression completion
+implemented by the two sketched choose-your-own-adventure systems is reconstructible.
+For a system based solely on context-free grammar, this is the case if the grammar is not
+ambiguous. Although the constructed expression does not directly contain an encoding of the
+sequence of operations, it is possible to reconstruct which production rules have been applied
+(by parsing the expression according to the grammar). A choose-your-own-adventure structure
+editor that supports refactorings no longer has this property, because it always offers multiple
+ways of constructing a given program (a program can be constructed with or without a refactoring).
 
 \newpage
 
@@ -883,7 +1045,7 @@ it does not hold for all the examples dicusssed in Section~\ref{sec:examples}.
   Moreover, because the $\mathit{arg\,max}$ operation used in $\select$ performs statistical
   optimization, there is no guarantee that it can be used to generate a specific program.
   The system is only complete if it is possible to choose a constraint set $\boldsymbol{c}$ that
-  restrict the set of programs $E_\boldsymbol{c}$ to a single given program. This is the case
+  restrict the set of programs $E_{\boldsymbol{c}}$ to a single given program. This is the case
   only for some AI assistants (e.g., datadiff, which always offers constraints to map column to
   any chosen other column).
 
@@ -898,6 +1060,8 @@ it does not hold for all the examples dicusssed in Section~\ref{sec:examples}.
 Correctness and completeness are arguably both desirable properties of a choose-your-own-adventure
 system. Unlike for example type soundess, they are not strictly necessary in practice and are best
 seen as design trade-offs that designers should consider.
+
+\subparagraph{Uniqueness.}
 
 \section{Applications}
 \label{sec:applications}
@@ -1215,9 +1379,13 @@ Morphic plays a similar role to the additional menu in The Gamma. It remains to 
 the choose-your-own-adventure calculus can provide a new way of looking at those systems.
 
 \section{Limitations}
+\label{sec:limitations}
 
 TODO: Is this too general to be practically useful? E.g. LLM for interactive theorem provers
 arguably needs more specific information.
+
+\noindent
+TODO: Something about unnecessary seqentialization
 
 ~
 
