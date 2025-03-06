@@ -1,4 +1,4 @@
-\documentclass[a4paper,UKenglish,cleveref, autoref, thm-restate]{lipics-v2021}
+\documentclass[anonymous, a4paper,UKenglish,cleveref, autoref, thm-restate]{lipics-v2021}
 \hideLIPIcs
 \newcommand{\ident}[1]{\textsf{#1}}
 \newcommand{\kvd}[1]{\textsf{\bfseries #1}}
@@ -34,21 +34,32 @@
 
 \begin{abstract}
 \noindent
-TODO: Some of the most remarkable results in mathematics reveal connections between different
+Some of the most remarkable results in mathematics reveal connections between different
 branches of the discipline. The aim of this paper is to point out a modest, but still
 remarkable, similarity between a range of different interactive programming systems.
+%
+In many programming systems, the user can interactively construct a program by repeatedly
+triggering some kind of completion mechanism and choosing one of the offered options. This
+is the case with code editors for object-oriented languages (choosing object members), data
+exploration environments (choosing an applicable transformation), but also theorem provers
+(choosing an applicable tactic) and structure editors (choosing a grammar~rule).
 
-~
+In this paper, we formally capture the essence of this interaction pattern through a small
+formal model called \emph{the choose-your-own-adventure calculus}. We show how a wide range
+of different systems fits the model. Looking at the examples through a common perspective
+reveals multiple subtle differences. To formally capture those, we characterise
+basic properties of choose-your-own-adventure systems, resembling those from other areas
+of programming language research, including correctness, completeness and uniqueness.
+%
+We further show how the choose-your-own-adventure calculus can be used as the basis for
+formally studying more advanced interaction patterns including mixed-initiative interaction,
+AI-based programming assistants and programming by demonstration.
 
-\noindent
-TODO: Say somewhere that this also formalizes things like mixed-initiative interaction and
-programming by demonstration
-
-~
-
-\noindent
-TODO: It is mainly about giving us a nice way to talk about lots of things in interactive
-programming systems and enable a transfer of ideas between them
+We strongly believe that interaction with programming systems deserves as much attention
+as the underlying programming languages. Our work is one step in this direction. It provides
+a way of talking about commonalities and subtle differences between multiple interactive
+programming systems and enables a transfer of ideas between interactive systems from very
+different domains.
 
 \end{abstract}
 
@@ -57,8 +68,8 @@ programming systems and enable a transfer of ideas between them
 \section{Introduction}
 
 Multiple interactive programming systems, ranging from code editors for object-oriented programming
-languages to data exploration systems and interactive proof assistants, exhibit a remarkably
-similar pattern of interaction. They offer the user, who can be a programmer, a data scientist
+languages to data exploration systems, interactive proof assistants and structure editors, exhibit a
+remarkably similar pattern of interaction. They offer the user, who can be a programmer, a data scientist
 or a proof writer, a range of choices that the user can select from in order to complete their
 program, script or proof. The user can initiate the interaction iteratively, using it to
 create and refine a larger part of their program.
@@ -73,31 +84,40 @@ of the command used to construct it.
 %
 The nature of the generated options also varies. The list of choices may include all possible
 options that are valid at a given location, or it may list only a subset of the valid options.
-In some cases, it may also include incorrect options as, for example, in auto-completion
+In some cases, it may even include incorrect options as, for example, in auto-completion
 for dynamic languages \cite{frolich-2024-autocomplete}.
 
-The aim of this paper is paper is to formally capture the recurring interaction pattern:
+\begin{figure}[t]
+  \includegraphics[width=0.7\textwidth]{fig/worldbank.png}
+  \caption{F\# code editor showing completions offered by the World Bank type provider.}
+  \label{fig:worldbank}
+\end{figure}
+
+The aim of this paper is to formally capture the recurring interaction pattern:
 
 \begin{enumerate}
 \setlength{\itemsep}{5pt}
-\item We motivate the formalism by reviewing four different systems that implement a variation on the
-interaction pattern. These include type providers for data access in F\# \cite{syme-2013-inforich},
+\item We motivate the formalism by reviewing five different systems that implement a variation on the
+interaction pattern. These include type providers in F\# \cite{syme-2013-inforich},
 type providers for data exploration in The Gamma \cite{petricek-2022-thegamma,petricek-2017-dotdriven},
-AI assistants for semi-automated data wrangling \cite{petricek-2023-aias} and tooling for
-interactive proof assistants \cite{altenkirch-1994-alf,brady-2015-idris,verter-2024-mixed} (Section~\ref{sec:motivation}).
+AI assistants for semi-automated data wrangling \cite{petricek-2023-aias}, tooling for
+interactive proof assistants \cite{altenkirch-1994-alf,brady-2015-idris,verter-2024-mixed}
+and structure editing \cite{beckmann-2023-all} (Section~\ref{sec:motivation}).
 
 \item We introduce the \emph{choose-your-own-adventure calculus}, which is a small formal structure
 that models an interactive system where a user constructs a program by repeatedly choosing from a list
 of options offered by the system (Section~\ref{sec:calculus}).
 
 \item The calculus allows us to make the aforementioned subtle differences precise. We define the
-notions of \emph{correctness} and \emph{completeness} for the choose-your-own-adventure calculus.
-To distinguish the different ways of embedding the interactions in the edited programs, we
-also formally define \emph{internal} and \emph{external} mode of system integration.
+notions of \emph{correctness}, \emph{completeness} and \emph{uniqueness} for the choose-your-own-adventure
+calculus (Section~\ref{sec:properties}). To understand the way in which the interaction is
+integrated in a programming environment, we formally define the notion of \emph{expression
+completion} and capture a specfic kind of \emph{reconstructible} completion (Section~\ref{sec:calculus}).
 
-\item We show that various programmer assistance tools, such as search and AI-based recommendations
-can be built on top of the primitives offered by the calculus, showing how the
-choose-your-own-adventure calculus supports of transfer of ideas across different kinds of
+\item We show that multiple programmer assistance tools, such as mixed-initiative interaction,
+AI-based assistants and programming by demonstration can be defined on top of the primitives
+offered by the calculus (Section~\ref{sec:applications}). This also illustrates how the
+choose-your-own-adventure calculus supports transfer of ideas across different kinds of
 interactive programming systems.
 \end{enumerate}
 
@@ -108,13 +128,7 @@ interesting aspects of the pattern. Moreover, our work also confirms that progra
 language theory methods can be extremely effective for studying not just \emph{programming
 languages}, but also interactive \emph{programming systems}~\cite{jakubovic-2023-techdims}.
 
-\newpage
-
-\begin{figure}[t]
-  \includegraphics[width=0.7\textwidth]{fig/worldbank.png}
-  \caption{F\# code editor showing completions offered by the World Bank type provider.}
-  \label{fig:worldbank}
-\end{figure}
+% ==================================================================================================
 
 \section{Motivation}
 \label{sec:motivation}
@@ -127,16 +141,28 @@ materials \cite{brady-2015-idris,syme-2013-inforich,altenkirch-1994-alf}. Only r
 language theory started to be used to study interactive environments
 \cite{adams-2025-grove,mayer-2018-bidirectional}. Our work contributes to this research direction.
 
-The following sections review four different instances of the choose-your-own-adventure
-interaction pattern. In all of those, an interactive editor offers the user some kind of~a~com\-pletion list during working with the system.
+We start by reviewing five instances of the interaction pattern. In all of them, an editor
+offers the user a completion list to choose from during working with the system.
+
+\begin{figure}[t]
+\vspace{-0.5em}
+\includegraphics[width=0.48\textwidth]{fig/thegamma1.png}~~
+\includegraphics[width=0.48\textwidth]{fig/thegamma2.png}
+\caption{Constructing a query in The Gamma. We count the number of gold and silver medals for
+each athlete and sort the data by the number of gold medals.}
+\vspace{-0.5em}
+\label{fig:thegamma}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
 
 \subparagraph{Type providers.}
 
-F\# type providers \cite{syme-2013-inforich} are a mechanism for integrating external data
+F\# type providers \cite{syme-2013-inforich} are a mechanism for integrating (primarily) external data
 sources into the F\# type system. A type provider is a compiler extension, loaded and
 executed at compile-time and at edit-time. It can run arbitrary code to read the structure of
 external data and use it to generate a suitable statically-typed representation of the
-data, typically as objects with members. Type providers can, for example, infer the type from a
+data, typically objects with members. Type providers can, for example, infer the type from a
 sample JSON \cite{petricek-2016-fsdata} or read a database schema.
 
 The example in Figure~\ref{fig:worldbank} shows a simple type provider for accessing information
@@ -145,25 +171,17 @@ to access any indicator of any country in the database by choosing an appropriat
 and an \ident{[Indicator]} in a chain of members
 \ident{wb}.\ident{Countries}.\ident{[Country]}.\ident{Indicator}.\ident{[Indicator]}.
 The result is a time series with values for the given indicator and a country. More generally,
-the example can be seen as a special case of a type provider for slicing n-dimensional
-data cube \cite{petricek-2022-thegamma} -- we choose a fixed value for two of the three
-dimensions (country, indicator, time).
+the example can be seen as a special case of a type provider for slicing $n$-dimensional
+data cube \cite{petricek-2022-thegamma}. We choose a fixed value for two of the three
+dimensions (country, indicator, time) and obtain a series indexed by the remaining dimension.
 
-When using the type provider, the user types the first line of code and triggers auto-completion
-by typing \ident{wb} followed by the dot. The rest of the code is constructed by choosing an
-option from a list and typing another dot.\footnote{This interaction pattern has been
-lightheartedly called \emph{dot-driven development} by Phil Trelford \cite{seemann-2021-head}.}
+When using the type provider, the user types the first line of code to initialize the type provider
+and triggers auto-completion by typing \ident{wb} followed by the dot. The rest of the code is
+constructed by choosing an option from a list and typing another dot (a pattern light-heartedly
+called \emph{dot-driven development} by Phil Trelford \cite{seemann-2021-head}).
 
 
-\newpage
-
-\begin{figure}[t]
-\includegraphics[width=0.48\textwidth]{fig/thegamma1.png}~~
-\includegraphics[width=0.48\textwidth]{fig/thegamma2.png}
-\caption{Constructing a query in The Gamma. We count the number of gold and silver medals for
-each athlete and sort the data by the number of gold medals.}
-\label{fig:thegamma}
-\end{figure}
+% --------------------------------------------------------------------------------------------------
 
 \subparagraph{Data exploration.}
 
@@ -173,16 +191,26 @@ are used not just for data access, but also for constructing queries.
 
 The type provider shown in Figure~\ref{fig:thegamma} lets the user construct an SQL-like query by
 repeatedly choosing operations and their parameters \cite{petricek-2017-dotdriven}. It keeps track
-of the schema and uses it to generate all possible valid parameters. When sortin data, it generates
-an object with two members for each columns -- one for ascending and one for descending sort.
+of the schema and uses it to generate all possible valid parameters. For example, when sorting data, it generates
+an object with two members for each columns -- one for ascending and one for descending order.
 Similarly, the grouping operation first offers all columns as possible grouping keys and then
 lets the user choose from a range of pre-defined aggregations (sum, count, average, concatenate).
-The system also evaluates the query on the fly, providing a live preview during editing \cite{petricek-2020-live}.
+The system also evaluates the query on the fly, providing a live preview \cite{petricek-2020-live}.
 
-The interaction pattern is the same as before. After the usertriggers auto-completion, they
+The interaction pattern is the same as before. After the user triggers auto-completion, they
 repeatedly select an operation and its parameters to construct a query. One notable difference
 is that the structure of the generated types is potentially infinite (the user can keep adding
 further operations) and so the types are generated lazily.
+
+\begin{figure}[t]
+  \vspace{-0.5em}
+  \includegraphics[width=0.875\textwidth]{fig/aia.png}
+  \caption{Using the datadiff AI assistant to reconcile the structure of the two datasets.
+    The user is offered a list of constraints to prevent or force matching between specific columns.}
+  \label{fig:aia}
+\end{figure}
+
+% --------------------------------------------------------------------------------------------------
 
 \subparagraph{AI assistants.}
 
@@ -195,46 +223,38 @@ number of constraints that the user can choose from to refine the initial soluti
 solution is not correct, the user chooses a constraint and the AI assistant runs again, suggesting
 a new data transformation that respects the constraint.
 
-Figure~\ref{fig:aia} shows an example. It uses the datadiff \cite{sutton-2018-datadiff} AI
-assistant, running in a Wrattler notebook \cite{petricek-2018-wrattler}, to merge broadband
+Figure~\ref{fig:aia} shows an example. It uses the datadiff AI assistant \cite{sutton-2018-datadiff},
+running in a Wrattler notebook \cite{petricek-2018-wrattler}, to merge broadband
 quality data published by Ofcom for two subsequent years. The format of the CSV files for the
 two years differs. Columns were added, removed, renamed and their order has changed. In the
 example, we selected 6 columns from the year 2015 and want to find matching data from 2014.
 
 When the AI assistants runs automatically, it correctly maps the numerical columns, but it
 incorrectly maps the \ident{Urban.rural} (2014) column to \ident{Nation} (2015). This happens
-because both columns are categorical and have three values with similar distribution. A data
+because both columns are categorical and have three values with similar statistical distribution. A data
 analyst can easily spot the mistake. They click the ``+'' button to add a constraint and choose
 \ident{Don't match `Urban.rural' and `Nation'} to specify that the two columns should not be matched.
 Datadiff then runs again and finds the correct matching.
-
-\begin{figure}[t]
-  \includegraphics[width=0.9\textwidth]{fig/aia.png}
-  \caption{Using the datadiff AI assistant to reconcile the structure of the two datasets.
-    The user is offered a list of constraints to prevent or force matching between specific columns.}
-  \label{fig:aia}
-\end{figure}
-
-~
 
 The interaction patter is the same as in the previous two cases. The analyst constructs the
 correct data transformation by repeatedly choosing from a list of options, until they obtain
 the desired result. However, the way the interaction pattern is implemented differs.
 First, in the case of type providers, we are gradually constructing a program by adding operations to
-a method chain. Now, the AI assistant synthesizes a data transformation (program) and we are
+a method chain. An AI assistant automatically synthesizes a data transformation (program) and we are
 gradually adding constraints to control the synthesis. Second, in the case of type providers,
 the completion list offered all possible members of the object. Now, the list offers
 constraints recommended by the AI assistant which may not be complete.
 
-\newpage
-
 \begin{figure}[t]
+  \vspace{-0.5em}
   \includegraphics[width=0.6\textwidth]{fig/alf.png}
   \caption{Constructing a proof of the transitivity of the $\leq$ relation in the \textsc{Alf}
     editor. The user is offered a range of variables and constructors in scope at the current
     location. \cite{altenkirch-1994-alf}}
   \label{fig:alf}
 \end{figure}
+
+% --------------------------------------------------------------------------------------------------
 
 \subparagraph{Interactive theorem provers.}
 A fourth example of the choose-your-own-adventure interactive pattern can be found in interactive
@@ -245,7 +265,7 @@ It can, for example, generate a case split or search for a proof \cite{brady-201
 
 Systems like Idris provide key bindings to invoke the completions, but the functionality could
 also be offered through a user interface. An example that illustrates this is the interactive editor
-for the \textsc{Alf} theorem prover \cite{magnusson-1994-alf}, which is based on the refinement of
+for the \textsc{Alf} theorem prover \cite{magnusson-1994-alf}, which is based on a gradual refinement of
 an incomplete proof object \cite{altenkirch-1994-alf}. This is illustrated in Figure~\ref{fig:alf}.
 The user is proving the transitivity of the $\leq$ relation for Peano arithmetic natural numbers.
 They pattern match on the proof argument $p$ and complete the first branch. For the second branch,
@@ -256,9 +276,9 @@ for its arguments. Those can be, again, filled interactively, by choosing $p_1$ 
 completion.
 
 The interaction pattern is again the same. The user repeatedly triggers a completion and uses
-it to refine and complete their proof by filling holes. There are subtle differences too. Unlike
-with AI assistants, each completion directly refines the proof that the user is editing. Unlike
-with type providers, a completion may generate multiple new holes, rather than just adding to a
+it to refine and complete a proof by filling holes. There are subtle differences too. Unlike
+earlier, each completion directly refines the proof that the user is editing;
+a completion may also generate multiple new holes, rather than just appending to a
 chain of operations.
 
 The \textsc{Alf} editor is a historical example, but a similar user interface could be built for
@@ -267,21 +287,23 @@ represents the proof itself and a completion would replace a hole with a suggest
 the proof is a series of tactic invocations and so selected completions would be added to this
 list and would form a trace of the interaction with the user.
 
-\newpage
-
 \begin{figure}[t]
-  \includegraphics[width=0.55\textwidth]{fig/sandblocks.png}
+  \vspace{-0.25em}
+  \includegraphics[width=0.525\textwidth]{fig/sandblocks.png}
   \caption{Constructing a program using the Sandblocks structure editor \cite{beckmann-2023-all}.
     The user is typing the start of an expression and context menu offers possible production
     rules according to a grammar.}
   \label{fig:sand}
 \end{figure}
 
+% --------------------------------------------------------------------------------------------------
+
 \subparagraph{Structure editors.}
 Structure editors make it possible to construct programs by manipulating the abstract syntax tree
-of a program rather than by working with textual representation. The interaction with a structure
+of a program rather than by working with text. The interaction with a structure
 editor can be based on menus \cite{teitelbaum-1981-synth}, key bindings \cite{weber-2017-editors},
-tiles~\cite{moon-2022-tylr} and a range of other approaches.
+tiles~\cite{moon-2022-tylr} and a range of other approaches. A number of those fit
+the choose-your-own-adventure pattern.
 
 Sandblocks~\cite{beckmann-2023-all} is an example of a recent structure editor that is interesting
 for multiple reasons. First, the editor is automatically generated from a grammar. Second, the
@@ -290,17 +312,17 @@ the user is typing code and needs to fill a placeholder for an expression. After
 start of the expression, the editor offers a completion list with possible production rules from
 the grammar that are valid in the given context and are compatible with the text typed so far. The
 user can continue typing (to further refine the recommendation), but they can also select a rule
-from the menu. This completes the expression according to the production rule, leaving further
-empty holes in the code.
+from the menu. This completes the expression according to the production rule, generating further
+empty holes that can, in turn, be interactively filled with code.
 
-In Sandblocks, the context menus serve more as hints and users of the editor often
+In Sandblocks, context menus serve mainly as hints and users of the editor often
 construct programs through typing, but the system illustrates the fact that structure editors
 can also be based on the interaction pattern captured in this paper. The editor can offer
 all possible production rules based on the given grammar and the user could construct an
-entire program by choosing one of the rules (and manually entering primitive terminals such as
+entire program by choosing one of the rules (and manually entering terminals such as
 strings and identifiers).
 
-\newpage
+% ==================================================================================================
 
 \section{Formal model}
 \label{sec:calculus}
@@ -312,8 +334,8 @@ may not be visible to the user, but the user can always explicitly request the p
 so far.
 
 We can think of the interaction with the system as navigating through a tree structure, starting
-from a root and choosing one of the possible branches in each step.\footnote{Serving as another
-evidence for the surprising effectiveness of the concept of a tree \cite{nesetril-2005-strom}.}
+from a root and choosing one of the possible branches in each step. %\footnote{Serving as another
+%evidence for the surprising effectiveness of the concept of a tree \cite{nesetril-2005-strom}.}
 In the following definition, the key $\choices$ operation can thus be seen as returning
 branches of a given node.
 
@@ -332,20 +354,22 @@ system is a pair of operations \choices, \select\ such that:
 \end{definition}
 
 The definition is not a programming language calculus in the usual sense in that it does not
-define a concrete syntax with reduction rules. It is an abstract algebraic structure that captures
+define a concrete syntax with reduction rules. It is an abstract algebraic description of
 the structure of a system that supports the choose-your-own-adventure interaction pattern.
 The definition is close to that of an AI assistant \cite{petricek-2023-aias}, which is written
 using a language specific for the data wrangling domain (such as cleaning scripts or input and
 output data) but is structurally similar. It is also worth noting that the definition may describe
-not just trees, but also graphs with cycles -- a system can return to a previously visited state.
-This is not practically useful, but it does not pose a theoretical problem.
+not just trees, but also graphs with cycles. A system where the user can return to a previously
+visited state may not be practically useful, but it does not pose a theoretical problem.
+
+% --------------------------------------------------------------------------------------------------
 
 \subparagraph{Expression completion.}
 One of the subtle questions about the choose-your-own-adventure pattern raised in the introduction
 is whether a trace of the interaction can be reconstructed from the source code of an interactively
 constructed program. That is, if we follow a sequence of choices $\iota_1, \ldots, \iota_n$ to
-construct a program $e$, is it possible to recover the original sequene of choices from the
-program $e$.
+construct a program $e$, is it possible to recover the original sequene of choices through which
+it was constructed just from the program $e$.
 
 The choose-your-own-adventure interaction pattern is typically used to complete a partial program.
 To model this, we assume that the host language has a notion of a hole, written as~$?$
@@ -364,26 +388,28 @@ a choose-your-own-adventure system consisting of \choices\ and \select\ if:
 \raggedright
 \begin{enumerate}
 \item $\ident{init}(E[?]) = \sigmaN$ obtains the initial state of a choose-your-own-interaction system,
-\item $\sigma_n$ is a system state such that $\forall i\!\in\! 1\ldots n\;.\;(\iota_i\mapsto\sigma_i)\in\choices{(\sigma_{n-1})}$,
+\item $\sigma_n$ is a system state such that $\,\forall i\!\in\! 1\ldots n\;.\;(\iota_i\mapsto\sigma_i)\in\choices{(\sigma_{n-1})}$,
   i.e.,~the user\\ makes a series of choices resulting in a final state of the system $\sigma_n$,
-\item $E[e]$ where $e=\select(\sigma_n)$, i.e.,~the final program is constructed by replacing the hole
+\item $E[e]$ where $e=\select(\sigma_n)$ is the final program constructed by replacing the hole
   in the completion context with the expression $e$ generated from $\sigma_n$.
 \end{enumerate}
 \end{definition}
 
 As we will see when we revisit the earlier examples formally, this way of invoking a choose-your-own-adventure
-system is used, for example, in the case of interactive theorem provers like \textsc{Alf} or Idris.
+system is used, for example, in the case of interactive theorem provers.
 In those systems, the user triggers the completion on a proof (program) containing a hole.
 They then fill the hole and, possibly iteratively, further holes in the generated proof. The final
 expression is embedded in the source code, but it does not indicate what options, identified by
 $\iota_1, \ldots, \iota_n$, were selected in the process.
 
+% --------------------------------------------------------------------------------------------------
+
 \subparagraph{Reconstructible completion.}
 In many choose-your-own-adventure systems, it is possible to reconstruct a trace of the interaction
-through which a program was constructed. This is the case with type providers, where a user chooses
+through which a program was constructed. This is the case with type providers, where the user chooses
 a sequence of object members to be accessed and those members directly appear in the source code.
 The same would be the case in a completion system for Coq that would offer tactics to apply,
-becuase the resulting proof would contain a record of the selected tactics.
+becuase the resulting proof would consist of a sequence formed by the selected tactics.
 
 For systems such as type providers, we say that that expression completion is \emph{reconstructible}.
 To capture the notion formally, we again need the \ident{init} operation, but also an operation
@@ -403,25 +429,26 @@ a choose-your-own-adventure system consisting of \choices\ and \select\ if:
 \end{definition}
 
 If the integration of a choose-your-own-adventure system with a host programming language
-uses reconstructible expression completion, we can recover the choices through which the user completed
-an expression $e$ in a completion context $E[e]$, assuming they used the interactive system rather
-than entering the code directly. This also means that we can reconstruct the final state $\sigma_n$
-of the system by starting from $\ident{init}(E[?])$ and following the choices specified by
-$\iota_1, \ldots, \iota_n$.
+uses reconstructible expression completion, we can recover the choices through which the user
+constructed the expression $e$ in a completion context $E[e]$. This also means that we can
+reconstruct the final state $\sigma_n$ of the system by starting from $\ident{init}(E[?])$
+and following the choices specified by $\iota_1, \ldots, \iota_n$.
 
-\newpage
+% ==================================================================================================
+
 \section{Examples}
 \label{sec:examples}
 
-We now revisit the four examples from Section~\ref{sec:motivation} and show how they fit the
-above formal model. All four examples rely on some domain-specific logic. We describe what
-information the logic provides, but do not model it formally. This has been done elsewhere,
-in works describing the individual systems.
+We now revisit the five examples from Section~\ref{sec:motivation} and show how they fit the
+above formal model. All five examples rely on some domain-specific logic. We describe what
+information the logic provides, but refer to full description elsewhere for details.
 
 To show how the model lets us distinguish subtle details of interactive programming systems,
 we start with a model of data exploration system that is inspired by The Gamma, but differs in
-one notable way. We then discuss type providers more generally and show how to correctly model
-The Gamma. We then revisit the remaining two examples.
+one notable way. We then discuss type providers more generally and show how to model The Gamma
+more precisely. We then revisit the remaining three examples.
+
+% --------------------------------------------------------------------------------------------------
 
 \subsection{Data exploration}
 \label{sec:examples-data}
@@ -433,14 +460,14 @@ $\op(p_1, \ldots, p_n)$, loosely modelled after relational algebra \cite{codd-19
 In The Gamma, the query is hidden from the data analyst. Behind the scenes, the system generates
 objects with members and the identifiers designating individual options are the names of those
 members. The operation is encapsulated in the code of the accessor of the member. In the
-simplified model in this section we ignore this fact. The model presented here directly
+simplified model developed in this section we ignore this fact. The model presented here directly
 generates code that calls the underlying operations. For example, assume that the user makes
 the following choices:
 \[
 \textnormal{\ddident{group data}\,.\,\ddident{by Athlete}\,.\,\ddident{sum Gold}\,.\,\ddident{count all}\,.\,\ddident{then}}
 \]
 In The Gamma, the individual identifiers become object members and they are included as
-a member chain in the generated code. In the following simplified model, the completion
+a member chain in the generated code. In the simplified model presented here, the completion
 instead fills the hole with an expression representing the operation:
 \[
 \ident{group}(\texttt{"Athlete"}, \ident{sum}(\texttt{"Gold"}), \ident{count}())
@@ -448,7 +475,7 @@ instead fills the hole with an expression representing the operation:
 The two approaches have different human-computer interaction trade-offs. In terms of cognitive
 dimensions \cite{green-1989-cogdims,blackwell-2003-cogdims}, the latter has a greater closeness
 of mapping, while the former is less cognitively demanding to read for a non-programmer.
-As discussed in Section~\ref{sec:properties}, the two implementations of the choose-your-own-adventure
+As we will see in Section~\ref{sec:properties}, the two implementations of the
 interaction pattern also differ in terms of their formal properties.
 
 \subparagraph{Formal model.}
@@ -464,7 +491,7 @@ The behaviour of the $\choices$ operation depends on whether the last operation 
 expects further parameters or whether it is fully-specified. In the first case, the recommendation
 engine generates possible additional parameter values $p', p'', \ldots$ based on the schema $S$,
 the operation $\op_n$ and the already known parameters $\boldsymbol{p_n}$.
-The $\choices$ operation then generates options that add the additional parameter. We generated the
+The $\choices$ operation then generates options that add the additional parameter. We generate the
 identifiers $\iota',\iota'',\ldots$ based on the state and the parameter value, such as
 \ddident{by Gold descending}. Note that adding a parameter may also result in a new schema
 $S', S'', \ldots$ (which the recommendation engine computes based on the previous schema and the new parameter):
@@ -478,7 +505,7 @@ $S', S'', \ldots$ (which the recommendation engine computes based on the previou
 If the last operation takes no further parameters, the system produces a choice
 of possible next operations $\op', \op'', \ldots$. Again, we are also given new schemas $S', S'', \ldots$
 and we generate identifiers $\iota',\iota'',\ldots$ based on the operation name. The $\ident{choices}$
-operation then returns options that add the additional operation:
+operation then returns options that append the additional operation:
 \[
 \begin{array}{l}
 \choices(S, (\op_1(\boldsymbol{p_1}), \ldots, \op_n(\boldsymbol{p_n}))) =\\
@@ -495,13 +522,15 @@ host language lets us compose functions using $f\circ g$, we can write:
 \]
 The recommendation engine behind The Gamma provides a domain-specific logic for generating
 possible operations and their parameters based on the current schema of the data. As the above
-definition shows, this underlying engine can be easily exposed through the common
+definition shows, this underlying engine can be wrapped and exposed through the common
 choose-your-own-adventure interface.
+
+% --------------------------------------------------------------------------------------------------
 
 \subsection{Type providers}
 \label{sec:examples-tps}
 
-The type provider mechanism in F\# operates at the level of the type system. It is not a merely an
+The type provider mechanism in F\# operates at the level of the type system. It is not merely an
 editor feature. A type provider for a data source, such as the World Development Indicators database,
 generates a collection of types that model the external data source. In F\#, the types are classes
 with members that implement the logic to retrieve data at runtime.
@@ -512,7 +541,7 @@ based on its type. We model the completion as an iterative process, repeatedly a
 members to a chain. The state $\sigma$ thus consists of an initial expression on which the
 completion is invoked, a chain of selected members and the type of the last member.
 
-To model the completion mechanism, we also need to model information about types. We loosely
+To model the completion mechanism, we also need a representation of the type information. We loosely
 follow the Foo calculus model \cite{petricek-2016-fsdata} and write $\mathbb{C}$ for a set
 of class definitions, each consisting of an implicit class constructor and a collection of
 members $M$:
@@ -524,14 +553,13 @@ M &=& \ident{member}~\iota\!:\!C=e
 \end{array}
 \]
 Each member in the Foo calculus consists of a of a name $\iota$, return type $C$ and implementation
-$e$. For our purposes, we only need the type information and so the operations that define the
+$e$. For our purposes, we only need the type information and the operations that define the
 choose-your-own-adventure are parameterized by the set of classes $\mathbb{C}$.
 
 The $\choices_\mathbb{C}$ operation finds the class definition corresponding to the type of the
-last member in the current chain. It offers choices appending each of the available
+last member in the current chain. It generates choices appending each of the available
 members to the current chain. The $\select_\mathbb{C}$ operation returns the constructed
 member chain:
-
 \[
 \begin{array}{l}
 \choices_\mathbb{C}(e . \iota_1 . \lbrack\ldots\rbrack . \iota_n, C) =\\
@@ -556,7 +584,7 @@ the simple lookup $\mathbb{C}(C)$ needs to be replaced with an operation that re
 definition, alongside with a new context $\mathbb{C}'$ that contains additional generated
 type definitions (return types for all the members of the class~$C$).
 
-The model follows the internal mode of embedding the interaction in the program. It is easy to
+The model follows the reconstructible expression completion model. It is easy to
 define the \ident{decode} operation that takes the resulting generated expression and returns the
 sequence of choices, because the choices are items of the member chain. A slight caveat is that
 the completion is not invoked on an empty hole, but on a hole that contains the initial expression
@@ -565,9 +593,11 @@ and write $?_e$ for a hole containing the initial expression $e$. The $\ident{in
 then returns $e$ alongside with an empty chain and the type of $e$.
 
 As noted earlier, The Gamma does not embed query expressions directly into the generated code.
-It uses the same model as type providers and generates choices as members of
+It uses the model presented in this section and generates choices as members of
 types behind the scenes. We return to the differences between the two models in
 Section~\ref{sec:properties}.
+
+% --------------------------------------------------------------------------------------------------
 
 \subsection{AI assistants}
 \label{sec:examples-aias}
@@ -583,10 +613,10 @@ to the problem.
 
 An optimization-based AI assistant \cite{petricek-2023-aias} thus provides another, very
 different, way of implementing the choose-your-own-adventure pattern. The assistant operates
-with respect to some input data $X$ that does not change during the interaction and so we
+with respect to some input data $X$ that do not change during the interaction and so we
 parameterize the choose-your-own-adventure calculus operations by the data.
 The input data $X$ can be actual input data or a representative sample and so the AI assistant
-can be use past data to infer a cleaning script that will be used on new inputs.
+can use past data to infer a cleaning script that will be used on new inputs.
 
 The state $\sigma$ consists of a set of constraints specified by the user. We write
 $c$ for individual constraints and $\boldsymbol{c}$ for a set of constraints. The initial
@@ -604,11 +634,13 @@ finds an argument (an expression) for which the given function (scoring function
 The user-specified constraints can either restrict the set of possible expressions or influence
 the scoring function. More formally, we assume that:
 
+\vspace{-0.25em}
 \begin{itemize}
 \item $E_{\boldsymbol{c}}\subseteq E$ is a set of expressions that respect constraints $\boldsymbol{c}$,
 \item $Q_{\boldsymbol{c}}(X, e)$ is a scoring function with respect to the constraints $\boldsymbol{c}$,
   which returns the score of an expression $e$, i.e., how good $e$ is at cleaning the data $X$.
 \end{itemize}
+\vspace{-0.25em}
 
 \noindent
 For a given set of constraints $\boldsymbol{c}$, the $\select$ operation looks
@@ -624,7 +656,7 @@ that can be applied to $X_2$ in order to reconcile its structure with the sturct
 The constraints specified by the user restrict the space of possible column matchings and so they
 affect $E_{\boldsymbol{c}}$. The scoring function $Q_{\boldsymbol{c}}$ is independent of
 the constraints and computes a sum of distances between the statistical distributions of the
-columns from $X_1$ and a patched version of $X_2$.
+columns from $X_1$ and the patched version of $X_2$.
 
 The $\choices$ operation is responsible for generating possible constraints that the user may
 want to add to guide the inference. AI assistants typically offer the user options to prevent
@@ -636,19 +668,18 @@ To implement $\choices_X$, optimization-based AI assistants first call $\select_
 get the best expression $e$. Based on this, they generate possible constraints $c_1, c_2, \ldots$
 that the user may want to choose from. The identifiers $\iota_1,\iota_2, \ldots$ provide a
 human-readable description of the constraints. Note that this operation is specific to the particular
-AI assistant. The $\choices_X$ operation then offers a list of constraint sets where the additional
-constraint is added to the previously collected set:
+AI assistant; $\choices_X$ then offers a list of constraint sets with one of the additional constraints:
 \[
 \choices_X(\boldsymbol{c}) = \{\iota_1 \mapsto \boldsymbol{c}\cup\{ c_1 \}, \iota_2\mapsto\boldsymbol{c}\cup\{ c_2 \}, \ldots\}
 \]
-The integration of an AI assistant, as described here, has to follow the external mode of embedding.
-The interaction with the assistant results in a cleaning script (expression), but there is no way
-of reconstructing the constrains used to guide the optimization. To support internal embedding, the
+The expression completion for an AI assistant, as described here, is not reconstructible.
+The inter\-action results in a cleaning script (expression), but there is no way of reconstructing
+the constrains used to guide the optimization. To make the completion reconstructible, the
 $\select$ operation would need to explicitly include the constraints in the resulting expression.
 However, rerunning the $\select$ operation with the same constraints may result in a different
 cleaning script if the machine learning algorithm is probabilistic.
 
-\newpage
+% --------------------------------------------------------------------------------------------------
 
 \subsection{Theorem proving}
 \label{sec:examples-thm}
@@ -656,7 +687,7 @@ cleaning script if the machine learning algorithm is probabilistic.
 In the previous three sections, we showed how existing formally well-documented systems fit the
 choose-your-own-adventure interaction pattern. Although interactive theorem provers and editors
 for dependently typed languages implement similar kinds of interactions, there is no well-documented
-system that exactly fits the pattern. The closest example is perhaps the recently envisioned
+system that fits the pattern exactly. The closest example is perhaps the recently envisioned
 mixed-mode interaction theorem prover \cite{verter-2024-mixed}. Rather than reframing the
 implementation of an existing system, this section thus outlines a possible implementation.
 
@@ -664,7 +695,7 @@ implementation of an existing system, this section thus outlines a possible impl
 There are two approaches to interacting with an interactive theorem prover. In Coq, the user
 writes a sequence of tactics that transform proof goals. In Agda or Idris, the user writes a
 term, or program, of a type that represents the theorem. Interactive editors exist for both
-types of systems. For Coq, the \texttt{Company-Coq} \cite{pitclaudel-2016-companycoq,aspinall-2000-general}
+kinds of systems. For Coq, the \texttt{Company-Coq} \cite{pitclaudel-2016-companycoq,aspinall-2000-general}
 extension offers auto-completion, which recommends available tactics, hypotheses and local
 definitions, but it does not filter them based on what is valid in a given context.
 For Idris, the interactive editor \cite{brady-2015-idris} offers a range of commands that
@@ -673,20 +704,20 @@ for a proof. In Idris, the system produces valid completions, but those cover on
 of situations.
 
 Despite the different ways of working, an implementation of the choose-your-own-adventure
-pattern for both types of systems would be similar. Based on the sub-goal that the user is
-currently proving, the system would recommend a range of tactics that can be applied to the
-sub-goal. In the case of Coq, the selected tactic would be added to the sequence. In Idris, the
-selected tactic would be applied to transform the current term. The difference is in the mode of
-embedding. A system for Coq would provide internal embedding in that the selected option is added
+pattern for both kinds of systems would be similar. Based on the current sub-goal, the system
+would recommend a range of tactics that can be applied to the sub-goal. In the
+case of Coq, the selected tactic would be added to the sequence. In Idris, the selected tactic
+would be applied to transform the current term. The difference is in the expression completion.
+A system for Coq would provide reconstructible completion in that the selected option is added
 to the proof source code. (Much like selecting a completion when using type providers appends a
-member access.) A system for Idris-like language would use the tactic to transform the term,
-making it impossible to reconstruct the sequence of applied tactics as in the external mode of
-embedding.
+member access.) A system for Idris or Agda would use the tactic to transform the term,
+making it impossible to reconstruct the sequence of applied tactics.
 
 \begin{figure}
+\vspace{-1.5em}
 \[
 \begin{array}{lcl}
-\boxed{\Gamma \vdash \tau \Rightarrow e}\\[1em]
+%\boxed{\Gamma \vdash \tau \Rightarrow e}\\[1em]
 \dfrac{}{\Gamma,x:\tau \vdash \tau \Rightarrow x}~\ident{(syn-var)} &\quad&
 \dfrac{}{\Gamma \vdash \tau \Rightarrow ?_\tau}~\ident{(syn-hole)}\\[2em]
 \dfrac{\Gamma,x:\tau_1\vdash \tau_2 \Rightarrow e}{\Gamma \vdash \tau_1 \rightarrow \tau_2 \Rightarrow \lambda x.e}~\ident{(syn-lambda)}&&
@@ -695,8 +726,10 @@ embedding.
 \dfrac{\Gamma \vdash \tau \Rightarrow e_1 \quad \Gamma \vdash \tau \Rightarrow e_2 \quad \Gamma \vdash \ident{bool} \Rightarrow e}{\Gamma \vdash \tau \Rightarrow \ident{if}~e~\ident{then}~e_1~\ident{else}~e_2}~\ident{(syn-cond)}\\
 \end{array}
 \]
+\vspace{-0.25em}
 \caption{Illustrative set of simple type-directed program synthesis rules}
 \label{fig:synths}
+\vspace{-0.25em}
 \end{figure}
 
 \subparagraph{Type-directed synthesis.}
@@ -709,10 +742,10 @@ automate program synthesis and use more precise type information, such as refine
 \cite{polikarpova-2016-synthesis} and graded types \cite{hughes-2024-synthesis}, or include
 examples \cite{osera-2015-synthesis}. However, the same rules could be used to guide an
 interactive choose-your-own-adventure system. If the interaction was invoked to fill a typed
-hole $?_\tau$ in a context $\Gamma$, the system could collect multiple $e$ such that
-$\Gamma \vdash \tau \Rightarrow e$ and offer a choice of such options. Note that the definition
+hole $?_\tau$ in a context $\Gamma$, the system could collect all expressions $e$ such that
+$\Gamma \vdash \tau \Rightarrow e$ and offer a choice of those options. Note that the definition
 in Figure~\ref{fig:synths} synthesizes sub-expressions recursively, but a choose-your-own-adventure
-system may always fill those with a typed hole using (\ident{syn-hole}).
+system may proceed one step at a time, filling sub-expressions with typed holes using (\ident{syn-hole}).
 
 \subparagraph{Formal model.}
 From the perspective of user interaction, a proof assistant where a user interactively constructs
@@ -723,7 +756,7 @@ For example, consider a system akin to Idris where the user aims to construct a 
 $\tau$. The term may contain typed holes written as $?_\tau$ and a relation $\Gamma\vdash \tau\Rightarrow e$
 provides ways of synthesizing terms of type $\tau$. We again write $E[?_\tau]$ for a
 completion context containing a (typed) hole; we assume that the variables $\Gamma$ available in
-the completion context of the hole can be obtained using $\ident{vars}(E[\_])$.
+the completion context of the hole can be obtained using $\ident{vars}(E[?_\tau])$.
 
 To model a choose-your-own-adventure interaction akin to Idris, the state of the system
 would be the term $e$ itself, initially a typed hole. The $\choices$ operation synthesizes
@@ -733,18 +766,58 @@ could be based either on the tactic name (rule name) or show a preview of the re
 The $\choices$ operation suggests ways to fill a hole in the term:
 \[
 \begin{array}{rcl}
-\choices(E[?_\tau]) &=& \{\; \iota \mapsto e ~|~ \forall e\;.\; \ident{vars}(E[\_]) \vdash \tau \Rightarrow e_i \}\\
+\choices(E[?_\tau]) &=& \{\; \iota \mapsto E[e] ~|~ \forall e\;.\; \ident{vars}(E[?_\tau]) \vdash \tau \Rightarrow e_i \}\\
 \select(e) &=& e
 \end{array}
 \]
 The $\choices$ operation synthesizes possible terms of a type required by the hole. Since the
-state $\sigma$ is a term, the $\select$ operation simply returns it. The definition models the
-external embedding of the interaction, i.e., a system that behaves according to Idris. It
-constructs the term, but does not record the completion choices. That said, a system akin to Coq
-that constructs a sequence of tactics could be modelled too if the state was a sequence of
-tactics and $\choices$ appended the available tactics as options to the end of the current sequence.
+state $\sigma$ is a term, the $\select$ operation simply returns it. The expression completion
+mode of the system behaves similarly to Idris. It constructs the term, but does not record the
+completion choices. A system akin to Coq that constructs a sequence of tactics could be modelled
+too if the state was a sequence of tactics and $\choices$ appended the available tactics
+to the end of the current sequence.
 
-\newpage
+% --------------------------------------------------------------------------------------------------
+
+\subsection{Structure editors}
+\label{sec:examples-struct}
+
+Structure editors implement a broad range of patterns of interaction for program construction.
+They allows us to demonstrate some of the design considerations for
+choose-your-own-adventure systems. We contrast a simple choose-your-own-adventure system
+derived from a context-free grammar, inspired by Sandblocks~\cite{beckmann-2023-all},
+with a system that extends the basic grammar-directed program construction with supports
+refactorings, akin to \textsc{Deuce}~\cite{hempel-2018-deuce}.
+
+\subparagraph{Formal model.}
+We model a system that, similarly to Sandblocks, generates choices automatically based on a given
+context-free grammar. We assume the grammar $(\mathcal{N},\Sigma,\mathcal{P},S)$ consists of set of
+non-terminal symbols $\mathcal{N}$, terminal symbols $\Sigma$, start symbol $S\in\mathcal{N}$
+and production rules $\mathcal{P}$ of the form $n\mapsto\boldsymbol{s}$ where
+$n\in\mathcal{N}$ and $\boldsymbol{s}\in(\mathcal{N}\cup\Sigma)^{*}$ (we write $n$ for non-terminals,
+$t$ for terminals and $s$ for all symbols; bold indicates a sequence of symbols).
+
+When interacting with the choose-your-own-adventure system, the user is gradually constructing a
+program (sentence) of a form $\boldsymbol{s}\in(\mathcal{N}\cup\Sigma)^{*}$. The system state is the program (sentence)
+constructed so far, i.e., $\sigma = \boldsymbol{s}$. The process can continue
+as long as there are non-terminal symbols in the sentence and production rules applicable to them.
+
+In general, the $\choices$ operation could recommend applicable production rules for any
+non-terminal in the sentence. The following always chooses the first non-terminal by assuming
+a sentence $\boldsymbol{t}n\boldsymbol{s}$ consisting of zero or more terminals, followed by a
+single non-terminal and a sequence of arbitrary symbols (the need to sequentialize the construction
+is a limitation discussed in Section~\ref{sec:limitations}). The $\choices$ operation then finds
+all applicable production rules and offers them as choices. In a real-world system, identifiers
+$\iota_i$ are formed by the names of the rules (omitted from our formalism).
+\[
+\begin{array}{rcl}
+\choices(\boldsymbol{t}n\boldsymbol{s}) &=& \{\; \iota_i \mapsto \boldsymbol{t}\boldsymbol{s_i}\boldsymbol{s} ~|~ \forall (n\mapsto\boldsymbol{s_i})\in \mathcal{P} ~\}\\
+\select(\boldsymbol{s}) &=& \boldsymbol{s}
+\end{array}
+\]
+Unlike in the case of data exploration, the $\select$ operation does not ensure
+that a program is fully constructed and the returned sentence may contain further non-terminals.
+
 \begin{figure}[t]
 \small
 (a) Grammar of a minimal language with declarations and expressions
@@ -756,8 +829,9 @@ tactics and $\choices$ appended the available tactics as options to the end of t
 \mathit{block} & := & \mathit{stmt}^{*}
 \end{array}
 \]
+
 \begin{minipage}[t]{.5\textwidth}
-(b) Construction based on the grammar
+(b) Construction based on the grammar\\[-0.5em]
 
 \begin{enumerate}
 \setlength{\itemsep}{0.75em}
@@ -780,7 +854,7 @@ tactics and $\choices$ appended the available tactics as options to the end of t
 \end{enumerate}
 \end{minipage}%
 \begin{minipage}[t]{.5\textwidth}
-(c) Alternative sequence based on refactorings
+(c) Alternative sequence based on refactorings\\[-0.5em]
 
 \begin{enumerate}
 \setlength{\itemsep}{0.75em}
@@ -810,49 +884,12 @@ tactics and $\choices$ appended the available tactics as options to the end of t
 \label{fig:grammar}
 \end{figure}
 
-\subsection{Structure editors}
-Structure editors form a broad range of systems that support different kinds of interactions
-for constructing programs. This allows us to demonstrate some of the design considerations for
-choose-your-own-adventure systems. We first look at a simple choose-your-own-adventure system
-derived from a context-free grammar, which is inspired by Sandblocks~\cite{beckmann-2023-all}.
-We then discuss how such system could support refactorings in a way similar to
-\textsc{Deuce}~\cite{hempel-2018-deuce}, extending the basic grammar-directed way of working.
-
-\subparagraph{Formal model.}
-We model a system that, similarly to Sandblocks, generates choices automatically based on a given
-context-free grammar. We assume the grammar $(\mathcal{N},\Sigma,\mathcal{P},S)$ consists of set of
-non-terminal symbols $\mathcal{N}$, terminal symbols $\Sigma$, start symbol $S\in\mathcal{N}$
-and production rules $\mathcal{P}$ of the form $n\mapsto\boldsymbol{s}$ where
-$n\in\mathcal{N}$ and $\boldsymbol{s}\in(\mathcal{N}\cup\Sigma)^{*}$ (we write $n$ for non-terminals,
-$t$ for terminals and $s$ for all symbols; bold indicates a sequence of symbols).
-
-When interacting with the choose-your-own-adventure system, the user is gradually constructing a
-program (sentence) of a form $\boldsymbol{s}\in(\mathcal{N}\cup\Sigma)^{*}$. The system state is the program (sentence)
-constructed so far, i.e., $\sigma = \boldsymbol{s}$. The process can continue
-as long as there are non-terminal symbols in the sentence and production rules applicable to them.
-
-In general, the $\choices$ operation could recommend applicable production rules for any
-non-terminal in the sentence. The following always chooses the first non-terminal by assuming
-a sentence $\boldsymbol{t}n\boldsymbol{s}$ consisting of a sequence of terminals, followed by a
-single non-terminal and a sequence of arbitrary symbols (we discuss sequentialization
-in Section~\ref{sec:limitations}). The $\choices$ operation then finds all applicable production
-rules and offers them as choices. In a real-world system, identifiers $\iota_i$ are formed by
-the names of the rules (omitted from our formalism).
-\[
-\begin{array}{rcl}
-\choices(\boldsymbol{t}n\boldsymbol{s}) &=& \{\; \iota_i \mapsto \boldsymbol{t}\boldsymbol{s_i}\boldsymbol{s} ~|~ \forall (n\mapsto\boldsymbol{s_i})\in \mathcal{P} ~\}\\
-\select(\boldsymbol{s}) &=& \boldsymbol{s}
-\end{array}
-\]
-Unlike in the case of data exploration, the $\select$ operation does not ensure
-that a program is fully constructed and the returned sentence may contain further non-terminals.
-
 \subparagraph{Program refactorings.}
 The formal model derived from a context-free grammar is an adequate model for structure
 editors such as Sandblocks~\cite{beckmann-2023-all}, but many structure editors offer more
-advanced operations for program construction. \textsc{Deuce}~\cite{hempel-2018-deuce},
-which is a structure editor for a simple programming environment for creating Scalable
-Vector Graphics (SVG) images, for example, makes it possible to transform program through
+advanced operations for program construction. For example \textsc{Deuce}~\cite{hempel-2018-deuce},
+which is a structure editor for a programming environment for creating Scalable
+Vector Graphics (SVG) images, makes it possible to transform program through
 a range of refactorings such as extract function, introduce a local variable, inline definition,
 reorder arguments and more.
 
@@ -860,7 +897,8 @@ Figure~\ref{fig:grammar} illustrates program construction via refactoring using 
 example. It defines a small language with a grammar. Figure~\ref{fig:grammar} (b) shows some
 of the steps necessary to construct a simple program via the grammar rules.
 Figure~\ref{fig:grammar} (c) shows a more appealing alternative where the programmer starts
-with a simple program and then gradually makes it more general through a sequence of refactorings.
+with a simple program and then gradually refines it through a sequence of refactorings,
+making it more general.
 
 Modelling refactorings formally requires a more expressive framework~\cite{steimann-2011-refactoring},
 so we omit the details. The $\choices$ operation would need to identify applicable refactorings
@@ -868,12 +906,13 @@ for the current program and offer them to the user.
 
 An important point illustrated by the two examples is whether the expression completion
 implemented by the two sketched choose-your-own-adventure systems is reconstructible.
-For a system based solely on context-free grammar, this is the case if the grammar is not
-ambiguous. Although the constructed expression does not directly contain an encoding of the
+For a system based on non-ambiguous context-free grammar, this is the case.
+Although the constructed expression does not directly contain an encoding of the
 sequence of operations, it is possible to reconstruct which production rules have been applied
 (by parsing the expression according to the grammar). A choose-your-own-adventure structure
 editor that supports refactorings no longer has this property, because it always offers multiple
-ways of constructing a given program (a program can be constructed with or without a refactoring).
+ways of constructing a given program (a program can be constructed with or without a refactoring,
+or by using multiple refactorings in different orders).
 
 \newpage
 
@@ -882,10 +921,11 @@ ways of constructing a given program (a program can be constructed with or witho
 
 The choose-your-own-adventure calculus lets us precisely compare how how different
 programming systems interact with the user. We saw this in Section~\ref{sec:calculus}, which
-defines internal and external mode of embedding to distinguish between systems where the
+defines reconstructible expression completion to distinguish between systems where the
 interaction leaves a reconstructible trace in the constructed program and systems where it does not.
 In this section, we make precise two properties that were introduced informally in the context of
-data exploration in The Gamma \cite{petricek-2022-thegamma}.
+data exploration in The Gamma \cite{petricek-2022-thegamma} and an additional property related
+to reconstruction of interaction traces.
 
 The choose-your-own-adventure system for data exploration in The Gamma is \emph{correct}, meaning that
 all programs that a user can construct using the system, by repeatedly choosing from the
@@ -903,8 +943,8 @@ of correct expressions.
 For systems based on statically-typed programming languages, a reasonable choice of $\mathcal{E}$
 is a set of all well-typed expressions. For some systems, we may additionally want the set
 of correct expressions $\mathcal{E}$ to be hole-free, i.e., only programs that can run (or
-represent complete proofs) are correct. For systems where the completion is string-based,
-we may treat all syntactically-correct programs as correct.
+represent complete proofs) are correct. For systems where the completion is based on a grammar,
+we may require that correct programs do not contain non-terminals.
 
 
 \begin{definition}[Correctness]
@@ -923,7 +963,7 @@ we could generate from any of the intermediate states are correct.
 
 The property depends on what we choose as the subset of correct expressions
 $\mathcal{E}$. Trivially, all systems are correct with respect to $\mathcal{E}=E$.
-However, the systems discussed in Section~\ref{sec:examples} are, with one exception,
+However, the three of the five systems discussed in Section~\ref{sec:examples} are also
 correct with respect to a non-trivial set of correct expressions:
 
 \begin{itemize}
@@ -952,12 +992,17 @@ correct with respect to a non-trivial set of correct expressions:
 \item For the interactive system based on type-directed synthesis (Section~\ref{sec:examples-thm}),
   correct expressions are those that are well-typed. The system is correct if the synthesis rules
   are sound~\cite{osera-2015-synthesis}, that is if $\Gamma \vdash \tau \Rightarrow e$ then also
-  $\Gamma \vdash e : \tau$. Note that a correct choose-your-own-adventure system can be defined
+  $\Gamma \vdash e : \tau$. Note that a valid choose-your-own-adventure system can be defined
   even using unsound synthesis rules -- it would be sufficient to filter the recommended
   expressions in $\choices$ to the ones that are well-typed.
+
+\item A structure editor based on context-free grammar (Section~\ref{sec:examples-struct})
+  is not correct if we define $\mathcal{E}$ as the set of sentences that do not contain
+  non-terminals. A correct structure editor could be implemented if it was based
+  solely on refactorings such as those in Figure~\ref{fig:grammar}~(c).
 \end{itemize}
 
-There may be useeful systems that violate the correctness property. An tool based on a large
+There may be other useful systems that violate the correctness property. A tool based on a large
 language model (LLM) may generate code with errors that the programmer can later
 correct. A more interesting case would be a data exploration system, like the one discussed above,
 where programs only become correct after multiple subsequent choices are made, for example
@@ -965,11 +1010,11 @@ to fully specify arguments of an operation.
 
 \subparagraph{Eventual correctness.}
 The data exploration system discussed in Section~\ref{sec:examples-data} ensures correctness
-by dropping the last non-fully-specified operation in the $\select$ operation. As a result,
-it is correct, but it does not support internal embedding. If the operation is dropped, we cannot
-reconstruct the full sequence of interactions from the generated source code. Generating code
-that includes the non-fully-specified operation allows external embedding, but makes the system
-incorrect. It would still satisfy a weaker definition of (eventual) correctness.
+by dropping the last non-fully-specified operation in the $\select$ operation. As a result, it is
+correct, but it does not support reconstructible expression completion. If the operation is dropped,
+we cannot reconstruct the sequence of interactions from the source code. Generating code
+that includes the non-fully-specified operation allows reconstructibility, but makes the system
+incorrect. It would still satisfy a weaker eventual correctness property:
 
 \begin{definition}[Eventual correctness]\label{def:eventual}
 Assume that $\mathcal{E}\subseteq E$ is a subset of correct expressions,
@@ -984,26 +1029,27 @@ a choose-your-own-adventure system is eventually correct with respect to $\mathc
 \end{definition}
 
 Eventual correctness models systems where some sequences of choices result in invalid programs,
-but it is always possible to make further choices to reach a valid program. It is
-always possible to turn an eventually correct system into a correct one:
+but it is always possible to reach a valid program. This includes
+structure editors based on context-free grammars, as well as the data exploration system.
+Interestingly, it is always possible to turn an eventually correct system into a correct one:
 
 \begin{enumerate}
 \setlength{\itemsep}{5pt}
 \item As in the case of the data exploration, the system can remember the last state for which
   the $\select$ operation returned a correct program and use it in $\select$ until the next correct state is
   reached. This makes any eventually correct choose-your-own-adventure system correct, but it
-  does not support internal embedding.
+  breaks reconstructibility of expression completion.
 
 \item Alternatively, we can construct a system that collapses all sequence of temporarilly invalid states
   $\sigma_1, \ldots, \sigma_n$ identified by $\iota_1, \ldots, \sigma_n$ where
   $\forall i\!\in\! 1\ldots n\!-\! 1\;.\;\select(\sigma_i)\notin\mathcal{E}$ and $\select(\sigma_n)\in\mathcal{E}$
   into a single option $\iota' \mapsto \sigma_n$ where $\iota'$ is produced by concatenating
   identifiers $\iota_1,\ldots,\iota_n$.
-  This makes the system correct and also preserves external embedding, but it potentially
+  This makes the system correct and also preserves reconstructibility, but it potentially
   generates too many choices that are difficult to navigate.
 \end{enumerate}
 
-There is more to be said about correctness of interactive programming systems, but the
+There is more to be said about correctness of interactive programming systems. The
 conceptual framework provided by the choose-your-own-adventure calculus makes it possible to
 take the first step. Similarly, the model lets us formally define completeness.
 
@@ -1017,14 +1063,14 @@ the offered list. This is captured as the completeness property of a choose-your
 Assume that $\mathcal{E}\subseteq E$ is a subset of correct expressions.
 A~choose-your-own-adventure system is complete with respect to $\mathcal{E}$ if and only if:
 \begin{itemize}
-\item $\forall e\!\in\!\mathcal{E}\,.\,\exists \sigma_1,..,\sigma_n$ and $\iota_i,..,\iota_n$ such that
+\item $\forall e\!\in\!\mathcal{E}\,.\,\exists \sigma_1,..,\sigma_n$ and $\iota_1,..,\iota_n$ such that
   $\iota_i\mapsto\sigma_i \in \choices(\sigma_{i-1})$ and $e=\select(\sigma_n)$.
 \end{itemize}
 \end{definition}
 
 A system is complete if, for any correct program, there is a sequence of choices that can be
-used to construct the given program. This is a more subtle property than correctness and
-it does not hold for all the examples dicusssed in Section~\ref{sec:examples}.
+used to construct the given program. This is a more subtle property than correctness. It also
+does not hold for all the examples dicusssed in Section~\ref{sec:examples}.
 
 \begin{itemize}
 \setlength{\itemsep}{5pt}
@@ -1032,51 +1078,98 @@ it does not hold for all the examples dicusssed in Section~\ref{sec:examples}.
   only if the underlying query language had a fixed set of operations, a fixed set of aggregation
   operations (rather than letting users write their own) and a fixed set of values for each
   parameter (sorting by a key, but not based on a custom expression). A completion system for a
-  more general-purpose query language would be incomplete.
+  more general-purpose query language, such as SQL, would be incomplete.
 
 \item For type providers (Section~\ref{sec:examples-tps}), the completion mechanism is complete,
-  because it offers all available members of the type (and ``.'' has to be followed by a member
-  access). Consequently, the type provider in The Gamma is also complete. Even if the underlying
-  query language is more expressive, it is hidden from the user and the system offers all
-  available members.
+  because it offers all available members of the type. Consequently, the type provider in The
+  Gamma is also complete. Even if the underlying query language is more expressive, it is hidden
+  from the user and the system offers all available members.
 
 \item For AI assistants (Section~\ref{sec:examples-aias}), the system offers a set of constraints
   based on the current inferred program. It does not let the user construct arbitrary constraints.
-  Moreover, because the $\mathit{arg\,max}$ operation used in $\select$ performs statistical
+  Moreover, because the $\argmax$ operation used in $\select$ performs statistical
   optimization, there is no guarantee that it can be used to generate a specific program.
   The system is only complete if it is possible to choose a constraint set $\boldsymbol{c}$ that
   restrict the set of programs $E_{\boldsymbol{c}}$ to a single given program. This is the case
-  only for some AI assistants (e.g., datadiff, which always offers constraints to map column to
-  any chosen other column).
+  for some AI assistants, including datadiff, which always offers constraints to map column to
+  any chosen other column.
 
 \item A type-directed synthesis system (Section~\ref{sec:examples-thm}), or an interactive theorem
   prover could offer all possible ways of filling a hole with an expression containing further
   holes as sub-expressions. This would make the system complete (up to renaming of variables this
   may introduce), but the great number of generated options would be impractical. A realistic
-  system would only generate a subset of most useful proof/program steps and let the user write
+  system would only generate a subset of the most useful proof/program steps and let the user write
   other steps manually (interactive proof construction in Idris can be seen as operating in this way).
+
+\item Completeness is easy to show for structure editors based on context-free grammars
+  (Section~\ref{sec:examples-struct}). For each sentence that can be produced by the rules of
+  the grammar, there is a sequence of choices that applies the necessary rules. However, editors
+  based on refactorings may not have the property as some programs may not be reachable just
+  through refactoring transformations.
 \end{itemize}
 
 Correctness and completeness are arguably both desirable properties of a choose-your-own-adventure
 system. Unlike for example type soundess, they are not strictly necessary in practice and are best
 seen as design trade-offs that designers should consider.
 
+\newpage
+
 \subparagraph{Uniqueness.}
+The grammar-based structure editor example raised an interesting question about reconstructing
+interaction steps. Although the generated program does not directly have a sequential structure,
+it was possible to reconstruct the interaction steps from the expression (by parsing it and
+finding corresponding production rules). This is no longer possible if the program can be
+transformed through richer set of refactorings. The difference between the two examples is that
+the former has the uniqueness property:
+
+\begin{definition}[Uniqueness]
+A~choose-your-own-adventure system has the uniqueness property if and only if,
+for all expressions $e\in E$ it is the case that:
+\begin{itemize}
+\item if there are $\sigma_1,..,\sigma_n$ and $\iota_i,..,\iota_n$ such that
+  $\iota_i\mapsto\sigma_i \in \choices(\sigma_{i-1})$ and $e=\select(\sigma_n)$,
+\item and there are $\sigma'_1,..,\sigma'_n$ and $\iota'_i,..,\iota'_n$ such that
+  $\iota'_i\mapsto\sigma'_i \in \choices(\sigma'_{i-1})$ and $e=\select(\sigma'_n)$,
+\item then $\forall i\!\in\!\ 1\ldots n\,.\,\iota_i=\iota'_i\,\wedge\,\sigma_i=\sigma'_i$.
+\end{itemize}
+\end{definition}
+
+The uniqueness property guarantees that, for any program, there is only one way of constructing
+it. This is the case for the data exploration environment (Section~\ref{sec:example-data}) and
+type providers (Section~\ref{sec:examples-tps}) where the program directly mirrors the interactive
+steps. It is not the case for AI assistants (Section~\ref{sec:examples-aias}), where adding
+an irrelevant constraint may have no effect on the resulting program.
+
+A type-directed synthesis system or an interactive theorem prover (Section~\ref{sec:examples-thm})
+would have the property if no two tactics produce the same term. This is the case for our small
+example, but it may not hold in general. Finally, a structure editor based on an unambiguous
+context-free grammar (Section~\ref{sec:examples-struct}) satisfies uniqueness, but a structure
+editor that allows further refactorings does not, in general, does not.
+
+In theory, uniqueness guarantees that we can define the \ident{decode} operation required
+by reconstructible expression completion. However, uniqueness does not guarantee that there is
+a computationally effective way. To decode an expression efficiently, we need to be able to
+start from the initial state and identify the correct choice in each step. This is possible for
+a structure editor based on a context-free grammar. As a counter-example, consider a system that
+offers a large tree of choices and produces expression that is a hash of the choices made. For
+such system, there is only one path to each hash, but reconstructing it requires searching the
+entire tree. To guarantee a computationally effective reconstructibility, we thus need more than
+uniqueness -- in particular, it needs to be possible to uniquely determine what part of the
+constructed program corresponds to which of the choices from the sequence.
 
 \section{Applications}
 \label{sec:applications}
 
 The choose-your-own-adventure calculus lets us treat a wide range of interactive programming
 systems as instances of the same general pattern. This makes it possible to discuss properties
-of the systems (as done in the previous section), reuse components in system implementations,
+of the systems, reuse components in system implementations,
 but also transfer ideas across different domains. In this section, we discuss three ideas that
-emerged in the context of a specific interactive system, but could be applied to any system
-based on the choose-your-own-adventure pattern.
-
-~
+emerged in the context of a specific interactive system, but could be applied to other systems
+based on the pattern.
 
 
 \begin{figure}[t]
+\small
 \definecolor{shade1}{HTML}{f0f0f0}
 \colorbox{shade1}{\colorbox{white}{
 $\begin{array}{l}
@@ -1117,7 +1210,7 @@ $}}
 
 
 \subsection{Mixed-initiative interaction}
-When using an interactive theorem prover, one typically constructs the proof manually until an
+When using a conventional interactive theorem prover, one typically constructs the proof manually until an
 automated strategy can fill in the remaining gaps. This is the case with Idris proof search,
 as well as Coq \texttt{auto} tactics. Richer ways of interacting exist \cite{lowe-1997-xbarnacle},
 but are less common. We developed a prototype mixed-initiative theorem prover [report citation
@@ -1126,9 +1219,8 @@ steps automatically, but defers back to the user when it gets stuck.
 
 \subparagraph{Mixed-initiative theorem proving.}
 As an illustration of the mixed-initiative proving, consider Figure~\ref{fig:proof} which
-shows a proof of commutativity of $+$ in Peano arithmetic. The figure shows a version of our example
-[report citation omitted],\footnote{Adapted from \url{https://github.com/boyland/sasylf/blob/master/examples/sum.slf}}
-simplified for brevity and written using the SASyLF notation \cite{aldrich-2008-sasylf}.
+shows a proof of commutativity of $+$ in Peano arithmetic. The figure shows a version of our example,
+adapted from SASyLF \cite{aldrich-2008-sasylf,aldrich-2025-sum} and simplified for brevity.
 After writing proofs of \ident{sum-z-rh} and \ident{sum-s-rh} (not shown), the user states
 \ident{sum-commutes} and specifies the structure of the induction. They then invoke the automatic
 search, which completes the first case, but gets stuck in the second case, because it fails
@@ -1144,6 +1236,42 @@ recursively searches through the available choices. If it finds one that results
 proof, it stops. Otherwise, it completes a number of steps (determined by some heuristic)
 and defers back to the user who chooses the next step and completes the proof manually or
 invokes the automatic search again.
+
+
+\begin{figure}[t]
+{\raggedright\ttfamily\small
+You are helping user to complete a task in an interactive programming environment. The user's
+query is: "Give me the athlete with the largest number of gold medals."
+
+~\\[-0.75em]
+
+The query built so far is: "olympics"."group data"."by Athlete".
+
+~\\[-0.75em]
+
+The environment offers the user possible options. Choose an option that the should be applied to the current dataset:
+
+~\\[-0.75em]
+
+1.\hspace{0.4em} count distinct Athlete\\
+2.\hspace{0.4em} count distinct Discipline\\
+\hspace{2.3em}\lbrack\textit{multiple options omitted}\rbrack \\
+13. count all\\
+14. concatenate Athlete\\
+15. concatenate Discipline\\
+\hspace{2.3em}\lbrack\textit{multiple options omitted}\rbrack\\
+23. sum Gold\\
+24. sum Silver\\
+25. sum Year\\
+
+~\\[-0.75em]
+
+You should answer with the number of the option and no further explanation.}
+\caption{A prompt to complete a data exploration query based on a natural language
+question, which uses LLM to choose from the available completion options.}
+\label{fig:llm}
+\end{figure}
+
 
 \subparagraph{Generalised mixed-initiative interaction.}
 The mixed-initiative mode of interaction combines manual interaction with automatic search.
@@ -1179,11 +1307,9 @@ The definition only requires that the suggested sequence of choices is valid, bu
 does not specify how exactly the system should make the recommendations. This is specific to
 a particular system. An interactive theorem prover will try to find a proof or solve
 sub-goals, whereas data wrangling system may try to improve the structure of data.
-In practice, the suggestion should improve the quality of the constructed program so that
+In practice, the suggestion should improve the quality of the program so that
 $\select(\sigma_n)$ is better than $\select(\sigma_0)$, but we leave the definition flexible
-to accommodate a broader range of potential uses.
-
-\newpage
+to accommodate a broader range of uses.
 
 \subsection{Language model-based completion}
 Large language models can assist with data exploration by generating snippets of code based
@@ -1194,76 +1320,43 @@ We developed a system that provides LLM-based natural language assistance for Th
 citation omitted] based on a mechanism that assists the user and is also applicable to other
 choose-your-own-adventure systems.
 
-\begin{figure}
-{\raggedright\ttfamily\small
-You are helping user to complete a task in an interactive programming environment. The user's
-query is: "Give me the athlete with the largest number of gold medals."
-
-~\\[-0.75em]
-
-The query built so far is: "olympics"."group data"."by Athlete".
-
-~\\[-0.75em]
-
-The environment offers the user possible options. Choose an option that the should be applied to the current dataset:
-
-~\\[-0.75em]
-
-1.\hspace{0.4em} count distinct Athlete\\
-2.\hspace{0.4em} count distinct Discipline\\
-\hspace{2.3em}\lbrack\textit{multiple options omitted}\rbrack \\
-13. count all\\
-14. concatenate Athlete\\
-15. concatenate Discipline\\
-\hspace{2.3em}\lbrack\textit{multiple options omitted}\rbrack\\
-23. sum Gold\\
-24. sum Silver\\
-25. sum Year\\
-
-~\\[-0.75em]
-
-You should answer with the number of the option and no further explanation.}
-\caption{A prompt to complete a data exploration query based on a natural language
-question, which uses LLM to choose from the available completion options.}
-\label{fig:llm}
-\end{figure}
-
-
 \subparagraph{LLM assistant for The Gamma.}
 Our system [reprot citation omitted] integrates a type provider like the one used in The Gamma
-with a large language model (GPT-3.5 and GPT-4). It lets user ask a natural language query and
-then recommends choices that the user should make in order to answer the query. Our system does
-not use LLM to generate code, but to recommend an option offered by the type provider. To do so,
-we construct a prompt as shown in Figure~\ref{fig:llm}, which asks the LLM to recommend the next
+with a large language model (GPT, Gemini, DeepSeek). It lets user ask a natural language query and
+then recommends choices that the user should make in order to answer the query. We do not
+use the LLM to generate code, but to recommend an option offered by the type provider.
+
+We construct a prompt as shown in Figure~\ref{fig:llm}, which asks the LLM to recommend the next
 choice. In this example, the LLM is able to reliably respond with ``23'', which is the correct
 choice. Our system then pre-selects it in the completion list offered to the user.
-
 In contrast to one-shot generation of Python or SQL code snippets, our approach guides the user
 through the program construction, providing them with an opportunity to review and check if the
 program logic matches their expectations.
 
-In addition to the basic prompting strategy outlined above, we evaluated a strategy where the LLM
+In addition to the basic prompting strategy, we evaluated a strategy where the LLM
 is provided with lookahead information, i.e., for each of the choices, we also include a list of
 the choices that will available subsequently (formatted as either inline information in parentheses
-or as a nested bullet-point list). We use two different data sources to evaluate the system,
-each with 10 queries for which we manually determine the correct choices. To compare the results,
+or as a nested bullet-point list). We evaluated the sytem using queries about the Eurostat
+database with 10 queries for which we manually determine the correct choices. To compare the results,
 we compute a score for each query by following the correct path, asking for an LLM recommendation
 in each step and computing the ratio of correct choices. Figure~\ref{fig:methods} shows the
-average scores for five different strategies, using two different LLM engines.
+average scores for five different strategies, using four different LLM engines.
 
 \begin{figure}[t]
-\includegraphics[width=0.7\textwidth]{fig/llm.png}
-\caption{A plot showing the average scores for two different large language models (GPT-3.5 and GPT-4)
-solving 20 challenge problems using five different prompting strategies.}
+\vspace{-1em}
+\includegraphics[width=0.62\textwidth]{fig/llm.png}
+\caption{A plot showing the average scores for four different large language models
+solving 10 challenge problems using five different prompting strategies.}
 \label{fig:methods}
 \end{figure}
 
 The results suggest that, when using a more advanced LLM system, the ratio of correct
-recommendations is high-enough to be practically useful. It also shows that providing more
-information to the LLM through the lookahead mechanism improves the quality of the recommendation,
-in a consistent way across multiple LLM systems. Arguably, offering a recommendation is preferrable
-over providing an opaque solution, because it keeps the human in the loop \cite{sellen-2024-copilot}
-and avoids ``ironies of automation'' \cite{bainbridge-1983-ironies} including deskilling.
+recommendations is high-enough to be practically useful. Interestingly,  providing more
+information to the LLM through the lookahead mechanism improves the quality for GPT-based systems,
+but not for other evaluated LLMs. Arguably, the mode of interaction where the user is offered
+a recommendation is preferrable over providing an opaque solution, because it keeps the human
+in the loop \cite{sellen-2024-copilot} and avoids ``ironies of automation''
+\cite{bainbridge-1983-ironies} including deskilling.
 
 \subparagraph{Generalised LLM assistant.}
 The LLM-based recommendation engine developed for The Gamma can be implemented for any
@@ -1297,11 +1390,10 @@ interactive systems discussed in this paper:
   Our approach suggests a potential prompting strategy.
 \end{itemize}
 
-It is interesting to note that the choose-your-own-adventure calculus provides a common structure
-that makes it possible to integrate multiple different approaches to assisting human in program
-construction, ranging from automatic search (if we can provide a suitable heuristic) to
-the use of LLMs (if generated choices carry enough semantic information). It can also serve as the
-basis for visual programming environments discussed next.
+It is interesting to note that the system sketched here combines a symbolic component (used for generating
+possible choices and checking their correctness) with an AI-based component (used for
+making choices). This is the same architecture that has been used by the Alpha\-Geometry
+system \cite{trinh-2024-alphageometry} for solving geometry problems.
 
 \begin{figure}[t]
   \includegraphics[width=0.9\textwidth]{fig/histogram.png}
@@ -1334,18 +1426,18 @@ and generates a new preview where the choice is reflected (e.g., by filtering th
 
 An interesting question is whether a program can be constructed solely through direct manipulation,
 by interacting with the live previews. For this to be possible, the live preview needs to
-offer links to all the possible options offered by $\choices$. This requires a careful design
+offer links to all the options offered by $\choices$. This requires a careful design
 of live previews. In Histogram (Figure~\ref{fig:histogram}), the live preview offers interactive
 elements for filtering based on equality test (row of drop-downs), sorting (up/down arrows)
 and indexing (indices in the ``\#'' column), but some operations (such as aggregation) can only
 be constructed through code. Previews in The Gamma provide interactive elements for all options,
 but those cannot always be integrated with the data display. For example, after choosing a grouping
 key (Figure~\ref{fig:groupby}), the preview shows the key column, but other columns are hidden.
-Specifying an aggregation thus requires an additional (somewhat arbitrary) ``+'' button that
-provides access to the available choices.
+Specifying an aggregation requires an additional ``+'' button that provides access to further choices.
 
 \begin{figure}[t]
-\includegraphics[width=0.6\textwidth]{fig/thegamma3.png}
+\vspace{-1em}
+\includegraphics[width=0.575\textwidth]{fig/thegamma3.png}
 \caption{Specifying aggregation in The Gamma through a live preview. Grouping keys can be
   selected from a drop-down, while aggregations have to be added through a menu.}
 \label{fig:groupby}
@@ -1381,42 +1473,53 @@ the choose-your-own-adventure calculus can provide a new way of looking at those
 \section{Limitations}
 \label{sec:limitations}
 
-TODO: Is this too general to be practically useful? E.g. LLM for interactive theorem provers
-arguably needs more specific information.
+Arguably, the study of interactive programming systems is less well-developed than the study
+of programming languages. Our work is a step towards remedying of the situation, but it is
+only one step. As all small formal models, our system ignores a number of practical concerns.
 
-\noindent
-TODO: Something about unnecessary seqentialization
+\subparagraph{Revisiting earlier choices.}
+Programmers often revise programs they wrote previously. For example, a data
+scientist may want to add further aggregation to a grouping or change the sorting key.
+The choose-your-own-adventure calculus does not model how such modifications are done.
+Modifying an earlier choice thus poses an interesting problem -- if an earlier choice is
+changed, we may try to ``replay'' the remaining choices based on the identifiers $\iota$,
+but there is no guarantee that they will be offered again and that this will yield the
+desired result.
 
-~
+\subparagraph{Sequentialization of completion.}
+In a number of examples, an expression contained multiple holes or non-terminals that can
+all be completed using the choose-your-own-adventure interaction. We generally assume that they
+can be completed sequentially, but this may be inconvenient limitation. It may be desirable to
+define a variant of expression completion where multiple independent recommendations are
+available for different parts of the program.
 
-\noindent
-TODO: What if the list of choices is infinite?
+\subparagraph{Searching through options.}
+In some systems, the number of options to choose from may be large or infinite. This can be the
+case for complex systems, as well as for correct systems generated from eventually correct systems.
+Similarly, systems may generate a very long chain of small number of options. In those cases,
+choosing options from a menu may be inconvenient -- an alternative interface may lets the
+user search the tree of options.
 
-~
-
-\noindent
-TODO: How do you go back and revisit earlier choices? Backtracking in theorem provers or
-fixing earlier part of the query in data exploration. Sometimes, you can retrace the
-steps, but they may change...
-
-~
-
-\noindent
-Related work - mbark for emacs, VS code command palette
-
-~
-
-\noindent
-Alphageometry paper - follows a similar way of working to choose-your-own-adventure
+\subparagraph{Richer user interfaces.}
+The choose-your-own-adventure calculus models a simple interaction based on menus. Although
+we point out that it can be used as the basis for richer interfaces (illustrated by the
+previews in programming by demonstration), it may be interesting to look at richer interfaces.
+In particular, a number of systems are centred around entities that can be selected and
+modified through commands or interactions. This includes Morphic's halos
+\cite{maloney-1995-morphic,maloney-2001-morphic}, the classic Alternate Reality Kit \cite{smith-1986-ark},
+as well as text-based systems \cite{camarena-2025-embark}.
 
 \section{Conclusions}
-
-TODO: Some conclusions
-1) lets us ask all those questions
-2) let ideas cross between domains
+Working in many interactive programming environments has the same feel as following a
+choose-your-own-adventure book. You start and repeatedly choose one of the offered options to
+construct a program, proof or to explore data. The aim of this paper is to formally capture
+this kind of interaction. As with formal models of programming languages, our model focuses on
+the minimal essence of the interaction pattern. Yet, this is sufficient to recognize similarities
+across a broad range of systems, talk about key properties that they may have, transfer knowledge
+across multiple domains, as well as to suggest a more general way of building richer programming
+experiences ranging from AI-assistants and mixed-initiative interaction to programming by demonstration.
 
 \newpage
-
 
 \bibliography{paper}
 
