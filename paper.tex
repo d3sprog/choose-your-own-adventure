@@ -1,5 +1,14 @@
-\documentclass[ a4paper,UKenglish,cleveref, autoref, thm-restate]{lipics-v2021}
-\hideLIPIcs
+\documentclass[anonymous,sigplan,screen]{acmart}
+
+\citestyle{acmnumeric}
+\settopmatter{printacmref=false}
+\setcopyright{acmlicensed}
+\copyrightyear{2025}
+\acmYear{2025}
+\acmDOI{XXXXXXX.XXXXXXX}
+\acmConference[Conference 'XX]{Conference Title}{Month DD--DD, 2025}{City, Country}
+\acmISBN{978-1-4503-XXXX-X/2025/06}
+
 \newcommand{\ident}[1]{\textsf{#1}}
 \newcommand{\kvd}[1]{\textsf{\bfseries #1}}
 \newcommand{\ddident}[1]{\guillemotleft\ident{#1}\guillemotright}
@@ -13,27 +22,40 @@
 \newcommand{\links}{\textnormal{\ident{links}}}
 \DeclareMathOperator{\argmax}{arg\,max}
 
-
-\bibliographystyle{plainurl}
-\title{The Choose-Your-Own-Adventure Calculus (Pearl/Brave New Idea)}
-
-\author{Tomas Petricek}{Charles University, Prague, Czechia}{tomas@tomasp.net}{0000-0002-7242-2208}{}
-\author{Jan Liam Verter}{Charles University, Prague, Czechia}{todo@todo}{}{}
-\author{Mikoláš Fromm}{Charles University, Prague, Czechia}{todo@todo}{}{}
-\ccsdesc[500]{Software and its engineering~General programming languages}
-\keywords{Interactive programming systems, Type providers, Proof assistants}
-\nolinenumbers
-
-% \funding{funding}
-% \acknowledgements{I want to thank \dots}
-\authorrunning{Authors}
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{TODO: #1}}}
 
 \begin{document}
 
-\maketitle
+\title{The Choose-Your-Own-Adventure Calculus}
+
+\author{Tomas Petricek}
+\orcid{0000-0002-7242-2208}
+\email{tomas@tomasp.net}
+\affiliation{%
+  \institution{Charles University}
+  \city{Prague}
+  \country{Czechia}
+}
+
+\author{Jan Liam Verter}
+\email{todo@todo}
+\affiliation{%
+  \institution{Charles University}
+  \city{Prague}
+  \country{Czechia}
+}
+
+\author{Mikol\'{a}\v{s} Fromm}
+\email{todo@todo}
+\affiliation{%
+  \institution{Charles University}
+  \city{Prague}
+  \country{Czechia}
+}
+
+\renewcommand{\shortauthors}{Petricek et al.}
 
 \begin{abstract}
-\noindent
 Some of the most remarkable results in mathematics reveal connections between different
 branches of the discipline. The aim of this paper is to point out a modest, but still
 remarkable, similarity between a range of different interactive programming systems.
@@ -63,9 +85,25 @@ different domains.
 
 \end{abstract}
 
-\newpage
+\begin{CCSXML}
+<ccs2012>
+ <concept>
+  <concept_id>10011007.10011006.10011008</concept_id>
+  <concept_desc>Software and its engineering~General programming languages</concept_desc>
+  <concept_significance>500</concept_significance>
+ </concept>
+</ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Software and its engineering~General programming languages}
+
+\keywords{Interactive programming systems, Type providers, Proof assistants}
+
+\maketitle
 
 \section{Introduction}
+
+\todo{Add argument for why formalism is needed: give a concrete example (e.g.\ the uniqueness/reconstructibility gap) that informal reasoning would miss.}
 
 Multiple interactive programming systems, ranging from code editors for object-oriented programming
 languages to data exploration systems, interactive proof assistants and structure editors, exhibit a
@@ -141,7 +179,9 @@ materials \cite{brady-2015-idris,syme-2013-inforich,altenkirch-1994-alf}. Only r
 language theory started to be used to study interactive environments
 \cite{adams-2025-grove,mayer-2018-bidirectional}. Our work contributes to this research direction.
 
-We start by reviewing five instances of the interaction pattern. In all of them, an editor
+We start by reviewing five instances of the interaction pattern.
+
+\todo{Clarify the two Gamma models upfront at the start of Section~\ref{sec:examples}: Sec.~4.1 generates direct operation calls; Sec.~4.2 models the actual Gamma, which hides operations behind member accesses.} In all of them, an editor
 offers the user a completion list to choose from during working with the system.
 
 \begin{figure}[t]
@@ -368,7 +408,7 @@ visited state may not be practically useful, but it does not pose a theoretical 
 One of the subtle questions about the choose-your-own-adventure pattern raised in the introduction
 is whether a trace of the interaction can be reconstructed from the source code of an interactively
 constructed program. That is, if we follow a sequence of choices $\iota_1, \ldots, \iota_n$ to
-construct a program $e$, is it possible to recover the original sequene of choices through which
+construct a program $e$, is it possible to recover the original sequene\todo{typo: sequene→sequence} of choices through which
 it was constructed just from the program $e$.
 
 The choose-your-own-adventure interaction pattern is typically used to complete a partial program.
@@ -409,7 +449,7 @@ In many choose-your-own-adventure systems, it is possible to reconstruct a trace
 through which a program was constructed. This is the case with type providers, where the user chooses
 a sequence of object members to be accessed and those members directly appear in the source code.
 The same would be the case in a completion system for Coq that would offer tactics to apply,
-becuase the resulting proof would consist of a sequence formed by the selected tactics.
+becuase\todo{typo: becuase→because} the resulting proof would consist of a sequence formed by the selected tactics.
 
 For systems such as type providers, we say that that expression completion is \emph{reconstructible}.
 To capture the notion formally, we again need the \ident{init} operation, but also an operation
@@ -586,7 +626,7 @@ type definitions (return types for all the members of the class~$C$).
 
 The model follows the reconstructible expression completion model. It is easy to
 define the \ident{decode} operation that takes the resulting generated expression and returns the
-sequence of choices, because the choices are items of the member chain. A slight caveat is that
+sequence of choices, because the choices are items of the member chain. \todo{Sketch decode: e.g.\ $\ident{decode}(e.\iota_1.\ldots.\iota_n) = (\iota_1,\ldots,\iota_n)$ — don't just assert it's easy.} A slight caveat is that
 the completion is not invoked on an empty hole, but on a hole that contains the initial expression
 on which the completion is applied. We can model this using filled holes \cite{omar-2019-holes}
 and write $?_e$ for a hole containing the initial expression $e$. The $\ident{init}(?_e)$ operation
@@ -652,7 +692,7 @@ The actual implementation of the optimization uses various machine learning tech
 find the optimal expression. In case of datadiff, $X$ is a pair of datasets $X_1, X_2$ to be
 reconciled. The AI assistant uses the Hungarian algorithm \cite{sutton-2018-datadiff} to construct
 a matching of columns from $X_1$ and $X_2$. The generated expression is a sequence of patches
-that can be applied to $X_2$ in order to reconcile its structure with the sturcture of $X_1$.
+that can be applied to $X_2$ in order to reconcile its structure with the sturcture\todo{typo: sturcture→structure} of $X_1$.
 The constraints specified by the user restrict the space of possible column matchings and so they
 affect $E_{\boldsymbol{c}}$. The scoring function $Q_{\boldsymbol{c}}$ is independent of
 the constraints and computes a sum of distances between the statistical distributions of the
@@ -677,7 +717,7 @@ The inter\-action results in a cleaning script (expression), but there is no way
 the constrains used to guide the optimization. To make the completion reconstructible, the
 $\select$ operation would need to explicitly include the constraints in the resulting expression.
 However, rerunning the $\select$ operation with the same constraints may result in a different
-cleaning script if the machine learning algorithm is probabilistic.
+cleaning script if the machine learning algorithm is probabilistic. \todo{Inconsistency: $\select$ uses $\argmax$ (deterministic) but is described here as probabilistic. Either model $\select$ as non-deterministic or acknowledge $\argmax$ is an idealisation.}
 
 % --------------------------------------------------------------------------------------------------
 
@@ -690,6 +730,8 @@ for dependently typed languages implement similar kinds of interactions, there i
 system that fits the pattern exactly. The closest example is perhaps the recently envisioned
 mixed-mode interaction theorem prover \cite{verter-2024-mixed}. Rather than reframing the
 implementation of an existing system, this section thus outlines a possible implementation.
+
+\todo{Formalise the Coq tactic-sequence case (state = sequence of tactics) alongside the Idris term-based case — only Idris is formally modelled; Coq is described in prose.} \todo{Discuss Programming by Navigation [lubin-2025-pbn]: maps directly onto CYOA (step set = choices, Strong Soundness = Correctness, Strong Completeness = Completeness); note reconstructibility is what CYOA adds.}
 
 \subparagraph{Theorem provers.}
 There are two approaches to interacting with an interactive theorem prover. In Coq, the user
@@ -919,7 +961,7 @@ or by using multiple refactorings in different orders).
 \section{Properties}
 \label{sec:properties}
 
-The choose-your-own-adventure calculus lets us precisely compare how how different
+The choose-your-own-adventure calculus lets us precisely compare how how\todo{typo: duplicate "how"} different
 programming systems interact with the user. We saw this in Section~\ref{sec:calculus}, which
 defines reconstructible expression completion to distinguish between systems where the
 interaction leaves a reconstructible trace in the constructed program and systems where it does not.
@@ -948,6 +990,7 @@ we may require that correct programs do not contain non-terminals.
 
 
 \begin{definition}[Correctness]
+\todo{$\sigma_0$ is free: add $\forall\sigma_0$ to bind the initial state. Also motivate: what goes wrong in practice if a system lacks this property?}
 Assume that $\mathcal{E}\subseteq E$ is a subset of correct expressions.
 A~choose-your-own-adventure system is correct with respect to $\mathcal{E}$ if and only if:
 \begin{itemize}
@@ -1040,14 +1083,16 @@ Interestingly, it is always possible to turn an eventually correct system into a
   reached. This makes any eventually correct choose-your-own-adventure system correct, but it
   breaks reconstructibility of expression completion.
 
-\item Alternatively, we can construct a system that collapses all sequence of temporarilly invalid states
-  $\sigma_1, \ldots, \sigma_n$ identified by $\iota_1, \ldots, \sigma_n$ where
+\item Alternatively, we can construct a system that collapses all sequence of temporarilly\todo{typo: temporarilly→temporarily} invalid states
+  $\sigma_1, \ldots, \sigma_n$ identified by $\iota_1, \ldots, \sigma_n$\todo{typo: last $\sigma_n$ should be $\iota_n$} where
   $\forall i\!\in\! 1\ldots n\!-\! 1\;.\;\select(\sigma_i)\notin\mathcal{E}$ and $\select(\sigma_n)\in\mathcal{E}$
   into a single option $\iota' \mapsto \sigma_n$ where $\iota'$ is produced by concatenating
   identifiers $\iota_1,\ldots,\iota_n$.
   This makes the system correct and also preserves reconstructibility, but it potentially
   generates too many choices that are difficult to navigate.
 \end{enumerate}
+
+\todo{Add non-trivial theorem: prove that each of the two constructions above actually satisfies the Correctness definition.}
 
 There is more to be said about correctness of interactive programming systems. The
 conceptual framework provided by the choose-your-own-adventure calculus makes it possible to
@@ -1060,6 +1105,7 @@ a type provider, it is possible to construct any chain just by repeatedly choosi
 the offered list. This is captured as the completeness property of a choose-your-own-adventure system.
 
 \begin{definition}[Completeness]
+\todo{$\sigma_0$ is free: add $\exists\sigma_0$ to bind the initial state. Also motivate: what can't users construct if completeness is violated?}
 Assume that $\mathcal{E}\subseteq E$ is a subset of correct expressions.
 A~choose-your-own-adventure system is complete with respect to $\mathcal{E}$ if and only if:
 \begin{itemize}
@@ -1070,7 +1116,7 @@ A~choose-your-own-adventure system is complete with respect to $\mathcal{E}$ if 
 
 A system is complete if, for any correct program, there is a sequence of choices that can be
 used to construct the given program. This is a more subtle property than correctness. It also
-does not hold for all the examples dicusssed in Section~\ref{sec:examples}.
+does not hold for all the examples dicusssed\todo{typo: dicusssed→discussed} in Section~\ref{sec:examples}.
 
 \begin{itemize}
 \setlength{\itemsep}{5pt}
@@ -1109,7 +1155,7 @@ does not hold for all the examples dicusssed in Section~\ref{sec:examples}.
 \end{itemize}
 
 Correctness and completeness are arguably both desirable properties of a choose-your-own-adventure
-system. Unlike for example type soundess, they are not strictly necessary in practice and are best
+system. Unlike for example type soundess\todo{typo: soundess→soundness}, they are not strictly necessary in practice and are best
 seen as design trade-offs that designers should consider.
 
 \newpage
@@ -1123,6 +1169,7 @@ transformed through richer set of refactorings. The difference between the two e
 the former has the uniqueness property:
 
 \begin{definition}[Uniqueness]
+\todo{Bug: both paths use index $n$, so paths of different lengths to the same $e$ are outside the definition. Use separate indices $n$ and $m$; conclusion should be $n=m$ and $\forall i\in 1..n.\,\iota_i=\iota'_i$. Also motivate: why does the user care?}
 A~choose-your-own-adventure system has the uniqueness property if and only if,
 for all expressions $e\in E$ it is the case that:
 \begin{itemize}
@@ -1135,7 +1182,7 @@ for all expressions $e\in E$ it is the case that:
 \end{definition}
 
 The uniqueness property guarantees that, for any program, there is only one way of constructing
-it. This is the case for the data exploration environment (Section~\ref{sec:example-data}) and
+it. This is the case for the data exploration environment (Section~\ref{sec:examples-data}) and
 type providers (Section~\ref{sec:examples-tps}) where the program directly mirrors the interactive
 steps. It is not the case for AI assistants (Section~\ref{sec:examples-aias}), where adding
 an irrelevant constraint may have no effect on the resulting program.
@@ -1144,7 +1191,7 @@ A type-directed synthesis system or an interactive theorem prover (Section~\ref{
 would have the property if no two tactics produce the same term. This is the case for our small
 example, but it may not hold in general. Finally, a structure editor based on an unambiguous
 context-free grammar (Section~\ref{sec:examples-struct}) satisfies uniqueness, but a structure
-editor that allows further refactorings does not, in general, does not.
+editor that allows further refactorings does not, in general, does not.\todo{typo: duplicate "does not"; delete the second one}
 
 In theory, uniqueness guarantees that we can define the \ident{decode} operation required
 by reconstructible expression completion. However, uniqueness does not guarantee that there is
@@ -1312,6 +1359,8 @@ $\select(\sigma_n)$ is better than $\select(\sigma_0)$, but we leave the definit
 to accommodate a broader range of uses.
 
 \subsection{Language model-based completion}
+\todo{Acknowledge LLM distinction (Review B): LLM-based choices are probabilistic and may be unsound — note that this is captured by the Correctness property (LLM completions violate it) and that the model accommodates non-deterministic choices.}
+\todo{Rewrite experiment description: new models are Claude Haiku~4.5 and Opus~4.7; 61 snippets across 5 providers (665 steps); two conditions (no-prompt baseline vs.\ navigation-rules system prompt); replace Figure 8; update key finding (prompt helps both models, Opus gains more: 60\%→79\%).}
 Large language models can assist with data exploration by generating snippets of code based
 on natural language description of the problem \cite{yin-2023-codegen}. A recognized drawback of
 this approach is that the user may gain only cursory understanding of the code and overlook
@@ -1462,7 +1511,7 @@ the live previews, created based on the gradually constructed programs. As illus
 this can always be achieved by listing the options in a menu, but it is more interesting to see
 if the links can be directly embedded in the preview as in the data table interface of Histogram.
 
-\textbf{TODO: rewrite this taking into account discussion with Brian!}
+\todo{Rewrite ARK/Morphic paragraph (Brian's email): these systems do NOT fit CYOA because interactive state is never reified into code — there is no $\select(\sigma)$. Acknowledge this as a genuine boundary of the calculus, not a future opportunity. The "opposite" of the theorem-prover case: only states, no separate expressions, making the key properties vacuous.}
 
 The idea of directly mapping elements in a user interface to underlying structure of the
 programming system has previously been implemented in pioneering user interface systems
@@ -1474,6 +1523,8 @@ the choose-your-own-adventure calculus can provide a new way of looking at those
 
 \section{Limitations}
 \label{sec:limitations}
+
+\todo{Add parametric/feature-based CAD (e.g.\ OnShape) as an additional example domain to counter the "anecdotal" criticism: constructing a model by choosing operations from a history tree fits the calculus directly.}
 
 Arguably, the study of interactive programming systems is less well-developed than the study
 of programming languages. Our work is a step towards remedying of the situation, but it is
@@ -1521,41 +1572,7 @@ across a broad range of systems, talk about key properties that they may have, t
 across multiple domains, as well as to suggest a more general way of building richer programming
 experiences ranging from AI-assistants and mixed-initiative interaction to programming by demonstration.
 
-\newpage
-
+\bibliographystyle{ACM-Reference-Format}
 \bibliography{paper}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 \end{document}
